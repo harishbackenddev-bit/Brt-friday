@@ -1,6 +1,7 @@
 // components/auth/PlanStep.tsx
 import React from "react";
 import { Crown, Check } from "lucide-react";
+import { TICKET_PRICE, calculatePayment } from "@/utils/paymentUtils";
 
 interface PlanStepProps {
   selectedPlan: "full" | "partial" | null;
@@ -8,18 +9,23 @@ interface PlanStepProps {
 }
 
 const PlanStep: React.FC<PlanStepProps> = ({ selectedPlan, setSelectedPlan }) => {
+  // Calculate amounts for each plan
+  const fullPlan = calculatePayment("full");
+  console.log("Full Plan:", fullPlan);
+  const partialPlan = calculatePayment("partial");
+console.log("Partial Plan:", partialPlan);
   const plans = [
     {
       id: "full" as const,
       title: "Full Payment",
       badge: "Save on fees",
-      badgeBg: "bg-[#22C55E]/15",
-      badgeBorder: "border-[#22C55E]/25",
-      badgeText: "text-[#22C55E]",
-      price: "R2,035",
+      badgeColor: "rgba(34, 197, 94, 0.12)",
+      badgeBorder: "rgba(34, 197, 94, 0.25)",
+      badgeText: "#22C55E",
+      price: `R${fullPlan.totalDueToday.toLocaleString()}`,
       priceLabel: "today",
-      deposit: "R2,035",
-      balance: "R0",
+      deposit: `R${fullPlan.totalDueToday.toLocaleString()}`,
+      balance: `R${fullPlan.remainingBalance.toLocaleString()}`,
       chargeDate: "None",
       description: "Single payment today",
     },
@@ -27,13 +33,13 @@ const PlanStep: React.FC<PlanStepProps> = ({ selectedPlan, setSelectedPlan }) =>
       id: "partial" as const,
       title: "Partial Payment",
       badge: "Flexible",
-      badgeBg: "bg-[#C9A227]/10",
-      badgeBorder: "border-[#C9A227]/25",
-      badgeText: "text-[#C9A227]",
-      price: "R1,018",
+      badgeColor: "rgba(201, 162, 39, 0.1)",
+      badgeBorder: "rgba(201, 162, 39, 0.25)",
+      badgeText: "#C9A227",
+      price: `R${partialPlan.totalDueToday.toLocaleString()}`,
       priceLabel: "today",
-      deposit: "R1,018",
-      balance: "R1,017",
+      deposit: `R${partialPlan.totalDueToday.toLocaleString()}`,
+      balance: `R${partialPlan.remainingBalance.toLocaleString()}`,
       chargeDate: "25 June 2026",
       description: "Deposit now · balance later",
     },
@@ -87,7 +93,7 @@ const PlanStep: React.FC<PlanStepProps> = ({ selectedPlan, setSelectedPlan }) =>
 
         <div className="flex items-end gap-2 pt-5 border-t border-[#C9A227]/15">
           <span className="font-black text-[38px] leading-none tracking-[-0.03em] bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] bg-clip-text text-transparent">
-            R2,000
+            R{TICKET_PRICE.toLocaleString()}
           </span>
           <span className="text-sm font-bold mb-1 text-white/30">ZAR</span>
         </div>
@@ -109,7 +115,7 @@ const PlanStep: React.FC<PlanStepProps> = ({ selectedPlan, setSelectedPlan }) =>
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-white font-bold text-base">{plan.title}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${plan.badgeBg} ${plan.badgeBorder} ${plan.badgeText}`}>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${plan.badgeColor} ${plan.badgeBorder} ${plan.badgeText}`}>
                     {plan.badge}
                   </span>
                 </div>

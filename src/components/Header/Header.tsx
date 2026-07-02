@@ -62,7 +62,7 @@ const Header = () => {
 
           {/* Desktop CTA Button */}
           <Link 
-          to="#reserve"
+          to="/onboarding"
           className="hidden md:inline-flex bg-gradient-to-r from-[#d4af37] to-[#f2ca46] text-black font-extrabold text-sm tracking-[0.04em] rounded-xl px-8 py-[14px] border-none cursor-pointer items-center gap-2.5 transition-all duration-200 hover:shadow-lg hover:shadow-[#d4af37]/20 hover:scale-[1.02] font-manrope">
             Reserve Your Spot
           </Link>
@@ -99,7 +99,7 @@ const Header = () => {
             </a>
           ))}
           <Link 
-          to="#reserve"
+            to="/onboarding"
             className="mt-4 bg-gradient-to-r from-[#d4af37] to-[#f2ca46] text-black font-extrabold text-base tracking-[0.04em] rounded-xl px-10 py-4 border-none cursor-pointer w-full max-w-[280px] transition-all duration-200 hover:shadow-lg hover:shadow-[#d4af37]/20"
           >
             Reserve Your Spot

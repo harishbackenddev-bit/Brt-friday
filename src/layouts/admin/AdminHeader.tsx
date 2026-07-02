@@ -258,11 +258,11 @@ const AdminHeader = ({
               )}
             </button>
 
-            <div className="flex items-center gap-3">
+            {/* <div className="flex items-center gap-3">
               <h1 className="text-lg font-semibold text-white hidden sm:block">
                 {getPageTitle()}
               </h1>
-            </div>
+            </div> */}
           </div>
 
           {/* Right Section */}
@@ -285,7 +285,7 @@ const AdminHeader = ({
               onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
               className="md:hidden p-2 hover:bg-white/5 rounded-lg transition-colors text-white/50 hover:text-white/80"
             >
-              <Search className="w-5 h-5" />
+              {/* <Search className="w-5 h-5" /> */}
             </button>
 
             {/* Notifications */}
@@ -349,12 +349,12 @@ const AdminHeader = ({
             </div>
 
             {/* Home Link */}
-            <Link
+            {/* <Link
               to="/"
               className="hidden sm:flex items-center gap-1.5 text-sm text-white/30 hover:text-white/60 px-2 py-1.5 rounded-lg hover:bg-white/5"
             >
               <Home className="w-4 h-4" />
-            </Link>
+            </Link> */}
 
             {/* Profile */}
             <div className="relative" ref={profileRef}>

@@ -11,11 +11,46 @@ import PlanStep from "@/components/auth/PlanStep";
 import PaymentStep from "@/components/auth/PaymentStep";
 import TicketStep from "@/components/auth/TicketStep";
 
+// Constants
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const TICKET_PRICE = 2000;
+
+// Payment calculation
+const calculatePayment = (plan: "full" | "partial") => {
+  if (plan === "full") {
+    return {
+      totalAmount: TICKET_PRICE,
+      depositAmount: TICKET_PRICE,
+      remainingBalance: 0,
+      depositPercentage: 100,
+      autoChargeDate: null,
+      isFullyPaid: true,
+    };
+  } else {
+    return {
+      totalAmount: TICKET_PRICE,
+      depositAmount: TICKET_PRICE * 0.5,
+      remainingBalance: TICKET_PRICE * 0.5,
+      depositPercentage: 50,
+      autoChargeDate: "25 June 2026",
+      isFullyPaid: false,
+    };
+  }
+};
+
+// Generate ticket ID
+const generateTicketId = () => {
+  const year = new Date().getFullYear();
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+  return `BRT-${year}-${random}`;
+};
+
 const CreateAccount = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState<string>("");
   
   // Form data
   const [formData, setFormData] = useState({
@@ -64,7 +99,6 @@ const CreateAccount = () => {
     setCardDetails((prev) => ({ ...prev, [id]: value }));
   };
 
-  // Set selected role
   const setSelectedRole = (role: string) => {
     setFormData((prev) => ({ ...prev, selectedRole: role }));
   };
@@ -72,17 +106,14 @@ const CreateAccount = () => {
   const validateStep = (): boolean => {
     switch (currentStep) {
       case 1:
-        // Validate personal details
         if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
           setError("Please fill in all required fields");
           return false;
         }
-        // Validate role selection
         if (!formData.selectedRole) {
           setError("Please select your role");
           return false;
         }
-        // If entrepreneur, validate business details
         if (formData.selectedRole === "entrepreneur") {
           if (!formData.businessUrl || !formData.companyName || !formData.companyUrl || !formData.linkedInUrl) {
             setError("Please fill in all business details");
@@ -117,26 +148,36 @@ const CreateAccount = () => {
     return true;
   };
 
-  // Handle payment submission to external API
-  const processPayment = async () => {
+  // Handle payment submission with direct API calls
+  const processPaymentAndSave = async () => {
     setLoading(true);
     setError(null);
 
     try {
+      // 1. Calculate payment amounts
+      const paymentDetails = calculatePayment(selectedPlan!);
+      
+      // 2. Prepare payment data
       const paymentData = {
-        plan: selectedPlan,
-        paymentMethod: paymentMethod,
-        cardDetails: paymentMethod === "card" ? cardDetails : null,
+        plan: selectedPlan!,
+        paymentMethod: paymentMethod!,
+        cardDetails: paymentMethod === "card" ? {
+          cardNumber: cardDetails.cardNumber,
+          cardHolder: cardDetails.cardHolder,
+          expiryDate: cardDetails.expiryDate,
+          cvv: cardDetails.cvv,
+        } : null,
         user: {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
-        }
+        },
+        amount: paymentDetails.depositAmount,
       };
 
-      // External API call for payment
-      const response = await fetch('https://api.yourpaymentgateway.com/pay', {
+      // 3. Process payment through external gateway
+      const paymentResponse = await fetch(`${API_BASE_URL}/payments/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,32 +185,118 @@ const CreateAccount = () => {
         body: JSON.stringify(paymentData),
       });
 
-      if (!response.ok) {
-        throw new Error('Payment failed');
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        throw new Error(errorData.message || 'Payment processing failed');
       }
 
-      const result = await response.json();
+      const paymentResult = await paymentResponse.json();
       
-      // Submit application to external API
-      const applicationResponse = await fetch('https://api.yourplatform.com/applications', {
+      if (!paymentResult.success) {
+        throw new Error(paymentResult.message || 'Payment failed');
+      }
+
+      const transactionId = paymentResult.transactionId || paymentResult.data?.transactionId;
+
+      // 4. Prepare application data
+      const applicationData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        projectDescription: formData.projectDescription,
+        selectedRole: formData.selectedRole,
+        businessUrl: formData.businessUrl || "",
+        companyName: formData.companyName || "",
+        companyUrl: formData.companyUrl || "",
+        linkedInUrl: formData.linkedInUrl || "",
+        investmentFocus: formData.investmentFocus || "",
+        plan: selectedPlan!,
+        paymentStatus: selectedPlan === "full" ? "completed" : "partial",
+        transactionId: transactionId,
+        amountPaid: paymentDetails.depositAmount,
+        totalAmount: TICKET_PRICE,
+        outstandingBalance: paymentDetails.remainingBalance,
+        paymentMethod: paymentMethod!,
+      };
+
+      // 5. Submit application
+      const applicationResponse = await fetch(`${API_BASE_URL}/applications/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          plan: selectedPlan,
-          paymentStatus: 'completed',
-          transactionId: result.transactionId,
-        }),
+        body: JSON.stringify(applicationData),
       });
 
       if (!applicationResponse.ok) {
-        throw new Error('Application submission failed');
+        const errorData = await applicationResponse.json();
+        throw new Error(errorData.message || 'Application submission failed');
       }
 
-      // Success - move to ticket step
+      const applicationResult = await applicationResponse.json();
+      
+      if (!applicationResult.success) {
+        throw new Error(applicationResult.message || 'Application submission failed');
+      }
+
+      // 6. Create ticket
+      const ticketData = {
+        ticketId: generateTicketId(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phoneNumber: formData.phone,
+        projectDescription: formData.projectDescription,
+        selectedRole: formData.selectedRole,
+        businessUrl: formData.businessUrl || "",
+        companyName: formData.companyName || "",
+        companyUrl: formData.companyUrl || "",
+        linkedInUrl: formData.linkedInUrl || "",
+        investmentFocus: formData.investmentFocus || "",
+        selectedPlan: selectedPlan!,
+        paymentMethod: paymentMethod!,
+        paymentStatus: selectedPlan === "full" ? "completed" : "partial",
+        amountPaid: paymentDetails.depositAmount,
+        totalAmount: TICKET_PRICE,
+        outstandingBalance: paymentDetails.remainingBalance,
+        transactionId: transactionId,
+        paymentDate: new Date().toISOString(),
+        cardLastFour: paymentMethod === "card" ? cardDetails.cardNumber.slice(-4) : null,
+        cardType: paymentMethod === "card" ? "Unknown" : null,
+        status: "pending",
+        eventName: "BRT150 Demo Day",
+        nextDueDate: "2026-12-21",
+        eventDate: new Date("2026-11-21").toISOString(),
+        isGuest: true,
+        submittedAt: new Date().toISOString(),
+      };
+
+      const ticketResponse = await fetch(`${API_BASE_URL}/tickets/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ticketData),
+      });
+
+      if (!ticketResponse.ok) {
+        const errorData = await ticketResponse.json();
+        throw new Error(errorData.message || 'Ticket creation failed');
+      }
+
+      const ticketResult = await ticketResponse.json();
+      
+      if (!ticketResult.success) {
+        throw new Error(ticketResult.message || 'Ticket creation failed');
+      }
+
+      // 7. Save transaction ID for display
+      setTransactionId(transactionId);
+
+      // 8. Success - move to ticket step
       setCurrentStep(5);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment processing failed');
     } finally {
@@ -186,7 +313,7 @@ const CreateAccount = () => {
     }
 
     if (currentStep === 4) {
-      await processPayment();
+      await processPaymentAndSave();
       return;
     }
 

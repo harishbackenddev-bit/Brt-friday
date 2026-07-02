@@ -25,8 +25,8 @@ const Navigation = () => {
             </a>
           ))}
         </div>
-          <Link 
-          to="#reserve"
+<Link
+  to="/onboarding"
   className="bg-gradient-to-r from-[#d4af37] to-[#f2ca46] text-black font-extrabold text-sm tracking-[0.04em] rounded-xl px-8 py-[14px] inline-flex items-center gap-2.5 transition-all duration-200 hover:shadow-lg hover:shadow-[#d4af37]/20 font-manrope"
 >
   Reserve Your Spot <ArrowRight size={17} />

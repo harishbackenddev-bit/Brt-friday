@@ -24,7 +24,8 @@ import UserDashboard from "@/pages/user/Dashboard";
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard";
 import Events from "@/pages/admin/Events/Events";
-
+import BRTTickets from "@/pages/admin/BRTTickets/BRTTickets";
+import TicketDetail from "@/pages/admin/BRTTickets/TicketDetail";
 
 const AppRoutes = () => {
   return (
@@ -57,8 +58,10 @@ const AppRoutes = () => {
           <AdminLayout />
         </ProtectedRoute>
       }>
-        <Route index element={<AdminDashboard />} />
+        <Route index element={<Events />} />
         <Route path="/admin/events" element={<Events />} />
+        <Route path="/admin/brt-tickets" element={<BRTTickets />} />
+        <Route path="/admin/brt-tickets/:id" element={<TicketDetail />} />
       </Route>
     </Routes>
   );

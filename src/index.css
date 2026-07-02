@@ -41,7 +41,7 @@
     /* Custom Colors - Light Mode */
     --color-bg-primary: #ffffff;
     --color-bg-secondary: #F4F6FB;
-    --color-bg-card: #ffffff;
+    --color-bg-card: #1f2937;
     --color-bg-input: #ffffff;
     --color-bg-hover: #f3f4f6;
     --color-bg-table: #f9fafb;
@@ -379,15 +379,14 @@ input:focus, select:focus, textarea:focus {
 /* ============================================
    TABLE STYLES
    ============================================ */
-table { background-color: #ffffff !important; }
-thead tr { background-color: #f9fafb !important; }
-tbody tr { border-color: #f3f4f6 !important; }
-tbody tr:hover { background-color: #f3f4f6 !important; }
+
+tbody tr { border-color: #1f2937 !important; }
+tbody tr:hover { background-color: #1f2937 !important; }
 
 .dark table { background-color: #1f2937 !important; }
-.dark thead tr { background-color: #374151 !important; }
-.dark tbody tr { border-color: #374151 !important; }
-.dark tbody tr:hover { background-color: #374151 !important; }
+.dark thead tr { background-color: #1f2937 !important; }
+.dark tbody tr { border-color: #1f2937 !important; }
+.dark tbody tr:hover { background-color: #1f2937 !important; }
 
 /* ============================================
    MODAL / OVERLAY
