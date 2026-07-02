@@ -1,7 +1,7 @@
 // pages/CreateAccount.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Lock, Check, ArrowRight, Shield } from "lucide-react";
+import { ChevronLeft, Lock, Check, ArrowRight } from "lucide-react";
 import Logo from "@/assets/home/logo.png";
 
 // Import step components
@@ -24,8 +24,7 @@ const CreateAccount = () => {
     email: "",
     phone: "",
     projectDescription: "",
-    isEntrepreneur: false,
-    isProfessional: true,
+    selectedRole: "", // "entrepreneur" | "professional" | "investor"
     businessUrl: "",
     companyName: "",
     companyUrl: "",
@@ -65,32 +64,30 @@ const CreateAccount = () => {
     setCardDetails((prev) => ({ ...prev, [id]: value }));
   };
 
-  const toggleEntrepreneur = () => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      isEntrepreneur: !prev.isEntrepreneur,
-      isProfessional: prev.isEntrepreneur ? true : false
-    }));
-  };
-
-  const toggleProfessional = () => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      isProfessional: !prev.isProfessional,
-      isEntrepreneur: prev.isProfessional ? true : false
-    }));
+  // Set selected role
+  const setSelectedRole = (role: string) => {
+    setFormData((prev) => ({ ...prev, selectedRole: role }));
   };
 
   const validateStep = (): boolean => {
     switch (currentStep) {
       case 1:
+        // Validate personal details
         if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
           setError("Please fill in all required fields");
           return false;
         }
-        if (!formData.isProfessional && !formData.isEntrepreneur) {
+        // Validate role selection
+        if (!formData.selectedRole) {
           setError("Please select your role");
           return false;
+        }
+        // If entrepreneur, validate business details
+        if (formData.selectedRole === "entrepreneur") {
+          if (!formData.businessUrl || !formData.companyName || !formData.companyUrl || !formData.linkedInUrl) {
+            setError("Please fill in all business details");
+            return false;
+          }
         }
         break;
       case 3:
@@ -189,7 +186,6 @@ const CreateAccount = () => {
     }
 
     if (currentStep === 4) {
-      // Process payment
       await processPayment();
       return;
     }
@@ -213,8 +209,7 @@ const CreateAccount = () => {
           <ApplicationStep
             formData={formData}
             handleInputChange={handleInputChange}
-            toggleEntrepreneur={toggleEntrepreneur}
-            toggleProfessional={toggleProfessional}
+            setSelectedRole={setSelectedRole}
             error={error}
           />
         );
@@ -262,7 +257,12 @@ const CreateAccount = () => {
 
     switch (currentStep) {
       case 1:
-        return !formData.firstName || !formData.lastName || !formData.email || !formData.phone;
+        if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) return true;
+        if (!formData.selectedRole) return true;
+        if (formData.selectedRole === "entrepreneur") {
+          if (!formData.businessUrl || !formData.companyName || !formData.companyUrl || !formData.linkedInUrl) return true;
+        }
+        return false;
       case 3:
         return !selectedPlan;
       case 4:
@@ -284,22 +284,14 @@ const CreateAccount = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+    <div className="min-h-screen bg-[#050505] font-['Manrope']">
       {/* Navigation */}
-      <nav 
-        className="fixed top-0 left-0 right-0 z-50"
-        style={{
-          background: 'rgba(5, 5, 5, 0.85)',
-          backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-        }}
-      >
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#050505]/85 backdrop-blur-[20px] border-b border-white/5">
         <div className="max-w-[1200px] mx-auto px-6 h-[62px] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/')}
-              className="mr-2 transition-colors"
-              style={{ color: 'rgba(255, 255, 255, 0.3)' }}
+              className="mr-2 transition-colors text-white/30 hover:text-white/60"
             >
               <ChevronLeft className="w-[18px] h-[18px]" />
             </button>
@@ -311,19 +303,13 @@ const CreateAccount = () => {
               />
               <div>
                 <div className="text-white font-bold text-sm leading-none mb-0.5">BRT150</div>
-                <div 
-                  className="font-bold tracking-[0.22em] uppercase text-[9px]"
-                  style={{ color: '#C9A227' }}
-                >
+                <div className="font-bold tracking-[0.22em] uppercase text-[9px] text-[#C9A227]">
                   Demo Day
                 </div>
               </div>
             </div>
           </div>
-          <div 
-            className="flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase"
-            style={{ color: 'rgba(255, 255, 255, 0.2)' }}
-          >
+          <div className="flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase text-white/20">
             <Lock className="w-[11px] h-[11px]" />
             Secure Registration
           </div>
@@ -331,17 +317,14 @@ const CreateAccount = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="min-h-screen pt-[62px]" style={{ background: '#050505' }}>
-        <div className="max-w-[580px] mx-auto px-6 py-16">
+      <div className="min-h-screen pt-[62px] bg-[#050505]">
+        <div className="max-w-[680px] mx-auto px-6 py-16">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 
-              className="font-bold leading-[1.15] mb-4"
-              style={{ fontSize: 'clamp(2rem, 5vw, 2.75rem)', color: '#FFFFFF' }}
-            >
-              Secure Your <span style={{ background: 'linear-gradient(90deg, #C9A227, #DFBA3A)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Seat</span>
+            <h1 className="font-bold leading-[1.15] mb-4 text-[clamp(2rem,5vw,2.75rem)] text-white">
+              Secure Your <span className="bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] bg-clip-text text-transparent">Seat</span>
             </h1>
-            <p className="text-base font-medium max-w-sm mx-auto leading-relaxed" style={{ color: 'rgba(255,255,255,0.42)' }}>
+            <p className="text-base font-medium max-w-sm mx-auto leading-relaxed text-white/40">
               21st November, 2026. BRT150, Ethereal, Newcastle, KwaZulu-Natal.
             </p>
           </div>
@@ -352,27 +335,13 @@ const CreateAccount = () => {
               <div key={step.number} className="flex items-start">
                 <div className="flex flex-col items-center gap-2 w-[76px]">
                   <div 
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
-                    style={{
-                      background: step.number < currentStep 
-                        ? 'linear-gradient(135deg, #C9A227, #DFBA3A)'
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      step.number < currentStep 
+                        ? 'bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] shadow-[0_0_18px_rgba(201,162,39,0.3)]'
                         : step.number === currentStep
-                        ? 'transparent'
-                        : 'transparent',
-                      border: step.number === currentStep 
-                        ? '2px solid #C9A227'
-                        : step.number < currentStep
-                        ? 'none'
-                        : '1px solid rgba(255,255,255,0.1)',
-                      color: step.number === currentStep 
-                        ? '#C9A227'
-                        : step.number < currentStep
-                        ? '#050505'
-                        : 'rgba(255,255,255,0.22)',
-                      boxShadow: step.number < currentStep 
-                        ? '0 0 18px rgba(201, 162, 39, 0.3)'
-                        : 'none',
-                    }}
+                        ? 'border-2 border-[#C9A227] text-[#C9A227] bg-transparent'
+                        : 'border border-white/10 text-white/20 bg-transparent'
+                    }`}
                   >
                     {step.number < currentStep ? (
                       <Check className="w-[13px] h-[13px]" strokeWidth={3} />
@@ -381,28 +350,24 @@ const CreateAccount = () => {
                     )}
                   </div>
                   <span 
-                    className="text-[10px] font-semibold tracking-wide text-center leading-tight"
-                    style={{
-                      color: step.number === currentStep 
-                        ? '#C9A227'
+                    className={`text-[10px] font-semibold tracking-wide text-center leading-tight ${
+                      step.number === currentStep 
+                        ? 'text-[#C9A227]'
                         : step.number < currentStep
-                        ? 'rgba(255,255,255,0.45)'
-                        : 'rgba(255,255,255,0.18)'
-                    }}
+                        ? 'text-white/45'
+                        : 'text-white/20'
+                    }`}
                   >
                     {step.label}
                   </span>
                 </div>
                 {index < steps.length - 1 && (
                   <div 
-                    className="mt-[18px] transition-all duration-500"
-                    style={{
-                      width: '28px',
-                      height: '1px',
-                      background: step.number < currentStep 
-                        ? 'linear-gradient(90deg, #C9A227, #DFBA3A)'
-                        : 'rgba(255,255,255,0.06)'
-                    }}
+                    className={`mt-[18px] transition-all duration-500 w-[28px] h-[1px] ${
+                      step.number < currentStep 
+                        ? 'bg-gradient-to-r from-[#C9A227] to-[#DFBA3A]'
+                        : 'bg-white/5'
+                    }`}
                   />
                 )}
               </div>
@@ -410,20 +375,13 @@ const CreateAccount = () => {
           </div>
 
           {/* Card Container */}
-          <div 
-            className="rounded-2xl p-8 md:p-10"
-            style={{
-              background: 'linear-gradient(135deg, #151010 0%, #0E0909 100%)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-            }}
-          >
+          <div className="rounded-2xl p-8 md:p-10 bg-gradient-to-br from-[#151010] to-[#0E0909] border border-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
             {/* Step Content */}
             {renderStepContent()}
 
             {/* Navigation Buttons */}
             {currentStep < 5 && (
-              <div className="flex flex-col gap-3 pt-2 mt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="flex flex-col gap-3 pt-2 mt-8 border-t border-white/5">
                 <div className="flex justify-between">
                   <button
                     onClick={handleBack}
@@ -444,21 +402,14 @@ const CreateAccount = () => {
                     className={`inline-flex items-center justify-center gap-2.5 font-bold rounded-xl transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed px-8 py-4 text-[15px] ${
                       isContinueDisabled()
                         ? "bg-gray-700 text-gray-400"
-                        : ""
+                        : "bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] shadow-[0_4px_20px_rgba(201,162,39,0.3)]"
                     }`}
-                    style={{
-                      background: isContinueDisabled() 
-                        ? 'none' 
-                        : 'linear-gradient(135deg, #C9A227 0%, #DFBA3A 100%)',
-                      color: isContinueDisabled() ? '#666' : '#050505',
-                      boxShadow: isContinueDisabled() ? 'none' : '0 4px 20px rgba(201, 162, 39, 0.3)',
-                    }}
                   >
                     {getButtonText()}
                     {!loading && <ArrowRight className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-center text-xs leading-relaxed pt-1" style={{ color: 'rgba(255,255,255,0.18)' }}>
+                <p className="text-center text-xs leading-relaxed pt-1 text-white/20">
                   By applying you agree to our Terms of Service and Privacy Policy.
                 </p>
               </div>
@@ -468,15 +419,7 @@ const CreateAccount = () => {
       </div>
 
       {/* Mobile Progress Dots */}
-      <div 
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full"
-        style={{
-          background: 'rgba(14, 10, 10, 0.92)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-        }}
-      >
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#0E0A0A]/90 backdrop-blur-[20px] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
         {steps.map((step) => (
           <button
             key={step.number}

@@ -1,37 +1,16 @@
 // layouts/admin/AdminSidebar.tsx
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard,
-  Users,
-  Briefcase,
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import {
   Calendar,
-  FileText,
-  Mic,
-  CreditCard,
-  Settings,
-  LifeBuoy,
+  Ticket,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  MessageSquare,
-  Bell,
-  User,
-  Shield,
-  HelpCircle,
-  Sparkles,
-  Layers,
-  BookOpen,
-  BarChart3,
-  Store,
-  UserCheck,
-  FileSpreadsheet,
-  Home,
-  Award,
-  Gift,
-  TrendingUp
+  LifeBuoy,
+  LayoutDashboard
 } from "lucide-react";
-import Logo from "@/assets/home/logo.png";
 
 interface AdminSidebarProps {
   isOpen?: boolean;
@@ -45,242 +24,195 @@ interface AdminSidebarProps {
 interface SidebarItem {
   title: string;
   path: string;
-  icon: React.ComponentType<any> | null;
+  icon: React.ComponentType<any>;
   badge?: string | number;
 }
 
-const AdminSidebar = ({ 
+const AdminSidebar = ({
   isOpen = true,
   onToggle,
   onClose,
   adminName = "Admin",
   adminEmail = "admin@email.com",
-  adminInitials = "A"
+  adminInitials = "AD"
 }: AdminSidebarProps) => {
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
+  
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + "/");
   };
 
-  // Admin menu items
-const sidebarItems: SidebarItem[] = [
-  { title: "Dashboard", path: "/admin", icon: LayoutDashboard },
-  // { title: "Users", path: "/admin/users", icon: Users, badge: "1,284" },
-  { title: "Manage Projects", path: "/admin/projects", icon: Briefcase },
-  { title: "Manage Experts", path: "/admin/experts", icon: UserCheck },
-  { title: "My Schedule", path: "/admin/schedule", icon: Calendar },
-  { title: "Workshop Requests", path: "/admin/workshop-requests", icon: BookOpen },
-  { title: "Credit Plans", path: "/admin/credit-plans", icon: CreditCard },
-  { title: "Subscription Management", path: "/admin/subscriptions", icon: TrendingUp,},
-  { title: "Invoicing", path: "/admin/invoices", icon: FileSpreadsheet },
-  { title: "Settings", path: "/admin/settings", icon: Settings },
-];
-
-const groupedItems = {
-  overview: sidebarItems.filter(item =>
-    ["/admin"].includes(item.path)
-  ),
-
-  // users: sidebarItems.filter(item =>
-  //   ["/admin/users"].includes(item.path)
-  // ),
-
-  operations: sidebarItems.filter(item =>
-    ["/admin/projects", "/admin/experts", "/admin/schedule", "/admin/workshop-requests",].includes(item.path)
-  ),
-
-  creditmanagement: sidebarItems.filter(item =>
-    ["/admin/credit-plans", "/admin/subscriptions", "/admin/invoices",].includes(item.path)
-  ),
-
-  settings: sidebarItems.filter(item =>
-    ["/admin/settings"].includes(item.path)
-  ),
-};
-
-  const categoryLabels: Record<string, string> = {
-    overview: "Overview",
-    users: "Users",
-    operations: "Operations",
-    creditmanagement: "Credit Management",
-    settings: "Settings",
-  };
-
-  const categoryIcons: Record<string, any> = {
-    overview: LayoutDashboard,
-    users: Users,
-    operations: Sparkles,
-    creditmanagement: CreditCard,
-    settings: Settings,
-  };
-
-const iconMap: Record<string, any> = {
-  "/admin": LayoutDashboard,
-  "/admin/users": Users,
-  "/admin/projects": Briefcase,
-  "/admin/experts": UserCheck,
-  "/admin/schedule": Calendar,
-  "/admin/workshop-requests": BookOpen,
-  "/admin/credit-plans": CreditCard,
-  "/admin/subscriptions": TrendingUp,
-  "/admin/invoices": FileSpreadsheet,
-  "/admin/settings": Settings,
-};
+  // Admin menu items - Only Events and BRT Tickets
+  const sidebarItems: SidebarItem[] = [
+    { title: "All Events", path: "/admin/events", icon: Calendar },
+    { title: "BRT Tickets", path: "/admin/brt-tickets", icon: Ticket },
+  ];
 
   return (
     <>
-      <aside className={`hidden lg:flex lg:flex-col fixed left-0 top-0 bottom-0 z-30 bg-[#0F2D63] dark:bg-[#0F2D63] transition-all duration-300 ${
-        isOpen ? 'w-[260px]' : 'w-[72px]'
-      }`}>
+<aside
+  className={`
+    fixed top-0 left-0
+    h-screen
+    bg-[#0E0909]/95 backdrop-blur-xl
+    border-r border-white/5
+    flex flex-col
+    z-50
+    transition-all duration-300 ease-in-out
+
+    ${
+      isOpen
+        ? "translate-x-0 w-64"
+        : "-translate-x-full lg:translate-x-0 lg:w-[72px]"
+    }
+  `}
+>
         {/* Logo */}
-        <div className={`flex items-center ${isOpen ? 'justify-center' : 'justify-center'} h-20 flex-shrink-0 px-4 border-b border-white/10`}>
-          <Link to="/admin">
-            {isOpen ? (
-              <img 
-                src={Logo} 
-                alt="Magalela Media" 
-                className="h-10 w-auto object-contain brightness-0 invert"
-              />
-            ) : (
-              <div className="w-8 h-8 bg-[#C85A32] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
+        <div className={`p-6 border-b border-white/5 ${!isOpen && 'lg:px-4 lg:py-4'}`}>
+          {isOpen ? (
+            <>
+              <h1 className="text-3xl font-bold tracking-wider bg-gradient-to-r from-[#F2CA46] via-[#D4AF37] to-[#AA6C39] bg-clip-text text-transparent">
+                BRT
+              </h1>
+              <p className="text-white/30 text-[10px] tracking-wide mt-1 font-medium">
+                ADMIN CONTROL
+              </p>
+            </>
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#F2CA46] via-[#D4AF37] to-[#AA6C39] flex items-center justify-center">
+                <span className="text-[#050505] font-bold text-sm">BRT</span>
               </div>
-            )}
-          </Link>
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 overflow-y-auto px-3 py-4 [scrollbar-width:none] ${!isOpen && 'px-2'}`}>
-          {Object.entries(groupedItems).map(([key, items]) => {
-            if (items.length === 0) return null;
-            const CategoryIcon = categoryIcons[key];
-            
-            return (
-              <div key={key} className="mt-4 first:mt-0">
-                {isOpen && (
-                  <div className="flex items-center gap-2 px-3 mb-2">
-                    {CategoryIcon && (
-                      <CategoryIcon className="w-3.5 h-3.5 text-white/30" />
-                    )}
-                    <p className="text-[11px] font-semibold tracking-widest uppercase text-white/40">
-                      {categoryLabels[key] || key}
-                    </p>
-                  </div>
-                )}
-                <div className={`flex flex-col gap-[2px] ${!isOpen && 'items-center'}`}>
-                  {items.map((item) => {
-                    const active = isActive(item.path);
-                    const Icon = iconMap[item.path] || item.icon;
-                    
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`relative flex items-center ${isOpen ? 'gap-3 px-3' : 'gap-0 justify-center px-0'} h-11 rounded-xl transition-all group ${
-                          active ? 'bg-white/10' : 'hover:bg-white/[0.06]'
-                        }`}
-                      >
-                        {active && isOpen && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 bg-[#C85A32] rounded-r-full"></div>
-                        )}
-                        
-                        {Icon && (
-                          <Icon 
-                            className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                              active 
-                                ? 'text-[#C85A32]' 
-                                : 'text-white/65 group-hover:text-white/90'
-                            }`}
-                          />
-                        )}
-                        
-                        {isOpen && (
-                          <span className={`flex-1 text-[14px] font-medium transition-colors ${
-                            active 
-                              ? 'text-white' 
-                              : 'text-white/80 group-hover:text-white/95'
-                          }`}>
-                            {item.title}
-                          </span>
-                        )}
-
-                        {isOpen && item.badge && (
-                          <span className="bg-[#C85A32] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
+        <nav className={`flex-1 p-4 space-y-6 overflow-y-auto custom-scrollbar ${!isOpen && 'lg:p-2'}`}>
+          {/* Events & Tickets Section */}
+          <div>
+            {isOpen && (
+              <div className="px-4 mb-2">
+                <span className="text-[10px] font-bold tracking-wider text-white/30">
+                  🎟️ EVENTS & TICKETS
+                </span>
               </div>
-            );
-          })}
+            )}
+            <div className="space-y-1">
+              {sidebarItems.map((item) => {
+                const active = isActive(item.path);
+                const Icon = item.icon;
 
-          {/* Help Center */}
-          {isOpen && (
-            <div className="mt-6 px-1">
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                <div className="w-9 h-9 bg-[#C85A32]/20 rounded-xl flex items-center justify-center mb-3">
-                  <LifeBuoy className="w-4 h-4 text-[#C85A32]" />
-                </div>
-                <p className="text-white font-semibold text-sm mb-3">Need Help?</p>
-                <Link to="/admin/help">
-                  <button className="w-full bg-[#C85A32] hover:bg-[#a8472a] text-white text-xs font-medium rounded-xl h-9 transition-colors">
-                    Explore Help Center
-                  </button>
-                </Link>
-              </div>
+                return (
+<Link
+  key={item.path}
+  to={item.path}
+  onClick={() => {
+    if (window.innerWidth < 1024) {
+      onClose?.();
+    }
+  }}
+  className={`
+    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+    ${
+      active
+        ? "bg-[#0A0707] border border-[#C9A227] shadow-[0_0_0_3px_rgba(201,162,39,0.12)] text-[#C9A227]"
+        : "text-white/40 hover:bg-white/5 hover:text-white/80"
+    }
+    ${!isOpen ? "lg:justify-center lg:px-2" : ""}
+  `}
+>
+  <Icon
+    className={`w-[18px] h-[18px] ${
+      active ? "text-[#C9A227]" : "text-white/40"
+    }`}
+  />
+  {isOpen && (
+    <span className="text-sm font-medium">{item.title}</span>
+  )}
+</Link>
+                );
+              })}
             </div>
-          )}
+          </div>
+
+
         </nav>
 
-        {/* Admin Profile */}
-        <div className={`border-t border-white/10 p-4 flex items-center ${isOpen ? 'gap-3' : 'justify-center gap-0'}`}>
-          {isOpen ? (
-            <>
-              <div className="w-9 h-9 bg-[#C85A32] rounded-full flex items-center justify-center shrink-0">
-                <span className="text-white text-xs font-bold">{adminInitials}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium truncate">{adminName}</p>
-                <p className="text-white/50 text-xs truncate">{adminEmail}</p>
-              </div>
-              <button className="text-white/50 hover:text-white transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </>
-          ) : (
-            <div className="w-9 h-9 bg-[#C85A32] rounded-full flex items-center justify-center shrink-0">
-              <span className="text-white text-xs font-bold">{adminInitials}</span>
-            </div>
-          )}
+        {/* Logout Button - Now opens modal */}
+        <div className="p-4 border-t border-white/5">
+          <button
+            onClick={() => setShowLogoutModal(true)}  // <-- FIXED: This opens the modal
+            className={`
+              flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full
+              text-white/30 hover:bg-red-400/10 hover:text-red-400 hover:border-red-400/30 border border-transparent
+              ${!isOpen && 'lg:justify-center lg:px-2'}
+            `}
+          >
+            <LogOut className="w-[18px] h-[18px]" />
+            {isOpen && <span className="text-sm font-medium">Logout</span>}
+          </button>
         </div>
 
-        {/* Toggle Button - Fixed position relative to sidebar */}
-        <button 
-          onClick={onToggle}
-          className="hidden lg:flex absolute -right-4 top-[130px] items-center justify-center w-8 h-8 bg-[#C85A32] rounded-full shadow-lg hover:bg-[#a8472a] transition-all z-40"
-          style={{ 
-            transform: isOpen ? 'translateX(0)' : 'translateX(0)',
-            right: isOpen ? '-16px' : '-16px'
-          }}
-        >
-          {isOpen ? (
-            <ChevronLeft className="w-3.5 h-3.5 text-white" />
-          ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-white" />
-          )}
-        </button>
+        {/* Toggle Button */}
+<button
+  onClick={onToggle}
+  className="hidden lg:flex absolute -right-3 top-24 items-center justify-center w-6 h-6 bg-[#C9A227] rounded-full shadow-lg hover:bg-[#DFBA3A] transition-all z-50"
+>
+  {isOpen ? (
+    <ChevronLeft className="w-3.5 h-3.5 text-[#050505]" />
+  ) : (
+    <ChevronRight className="w-3.5 h-3.5 text-[#050505]" />
+  )}
+</button>
       </aside>
 
       {/* Mobile Overlay */}
-      {isOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 z-20 bg-black/50 backdrop-blur-sm"
-          onClick={onClose}
-        ></div>
+{isOpen && (
+  <div
+    onClick={onClose}
+    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+  />
+)}
+
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-[#0E0909] border border-white/5 rounded-2xl p-7 w-full max-w-sm shadow-xl">
+            <h3 className="font-semibold text-white text-lg mb-2">
+              Sign out?
+            </h3>
+            <p className="text-white/40 text-sm mb-6">
+              You'll need to sign in again to access your workspace.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 border border-white/10 rounded-xl py-2.5 text-sm font-medium text-white/60 hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setShowLogoutModal(false);
+                  await handleLogout();
+                }}
+                className="flex-1 bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] rounded-xl py-2.5 text-sm font-semibold transition-all hover:shadow-lg hover:shadow-[#C9A227]/25"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

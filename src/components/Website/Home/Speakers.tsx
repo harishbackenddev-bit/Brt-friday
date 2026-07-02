@@ -1,11 +1,16 @@
 import React from 'react';
+import image1 from "@/assets/home/image1.png";
+import image2 from "@/assets/home/image2.png";
+import image3 from "@/assets/home/image3.png";
+import image4 from "@/assets/home/image4.png";
+
 
 const Speakers = () => {
   const speakers = [
-    { name: 'Dr. Amara Osei', role: 'Managing Partner', company: 'Frontier Capital', img: 'https://images.unsplash.com/photo-1614890085618-0e1054da74f8?w=400&h=400&fit=crop&auto=format' },
-    { name: 'Naledi Dlamini', role: 'CEO & Founder', company: 'TechBridge Africa', img: 'https://images.unsplash.com/photo-1563132337-f159f484226c?w=400&h=400&fit=crop&auto=format' },
-    { name: 'Marcus Sithole', role: 'Investment Director', company: 'Ubuntu Ventures', img: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&auto=format' },
-    { name: 'Dr. Priya Naidoo', role: 'Chief Strategy Officer', company: 'Pan-African Growth Fund', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&auto=format' }
+    { name: 'Dr. Amara Osei', role: 'Managing Partner', company: 'Frontier Capital', img: image1 },
+    { name: 'Naledi Dlamini', role: 'CEO & Founder', company: 'TechBridge Africa', img: image2 },
+    { name: 'Marcus Sithole', role: 'Investment Director', company: 'Ubuntu Ventures', img: image3 },
+    { name: 'Dr. Priya Naidoo', role: 'Chief Strategy Officer', company: 'Pan-African Growth Fund', img: image4 }
   ];
 
   return (

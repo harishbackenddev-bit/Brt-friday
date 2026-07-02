@@ -16,7 +16,7 @@ import { faqData } from '../../data/faqData';
 function Home() {
   return (
    <div className="min-h-screen bg-black text-white font-manrope">
-      <Navigation />
+      {/* <Navigation /> */}
       <Hero />
       <Highlights />
       <WhyAttend />

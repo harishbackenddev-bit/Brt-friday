@@ -23,6 +23,7 @@ import UserDashboard from "@/pages/user/Dashboard";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard";
+import Events from "@/pages/admin/Events/Events";
 
 
 const AppRoutes = () => {
@@ -57,6 +58,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       }>
         <Route index element={<AdminDashboard />} />
+        <Route path="/admin/events" element={<Events />} />
       </Route>
     </Routes>
   );

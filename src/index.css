@@ -281,11 +281,11 @@ input[type="time"]::-webkit-calendar-picker-indicator { opacity: 0; }
 /* ============================================
    INPUT FIELDS
    ============================================ */
-input, select, textarea {
+/* input, select, textarea {
   background-color: #ffffff !important;
   color: #1C1C1C !important;
   border-color: #e5e7eb !important;
-}
+} */
 
 .dark input, 
 .dark select, 
@@ -315,8 +315,12 @@ input::placeholder, textarea::placeholder {
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: #C85A32 !important;
-  box-shadow: 0 0 0 2px rgba(200, 90, 50, 0.1) !important;
+    background: rgb(10, 7, 7);
+    border: 1px solid rgb(201, 162, 39);
+    box-shadow: rgba(201, 162, 39, 0.12) 0px 0px 0px 3px;
+    padding-left: 2.75rem;
+    padding-right: 1rem;
+    font-family: Manrope, sans-serif;
 }
 
 /* ============================================

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Check, ArrowRight } from 'lucide-react';
 import { Link } from "react-router-dom";
+import WhYattend from "@/assets/home/why_attend.png";
+
 const WhyAttend = () => {
   const benefits = [
     'Access to a curated business ecosystem',
@@ -17,17 +19,17 @@ const WhyAttend = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
         <div className="relative rounded-2xl overflow-hidden">
           <img 
-            src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&h=700&fit=crop&auto=format" 
+            src={WhYattend}
             alt="Professional business networking" 
             className="w-full h-[580px] object-cover rounded-2xl"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-[#d4af37]/10 rounded-2xl"></div>
-          <div className="absolute bottom-7 left-7 right-7">
+          {/* <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-[#d4af37]/10 rounded-2xl"></div> */}
+          {/* <div className="absolute bottom-7 left-7 right-7">
             <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 px-6 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
               <div className="text-[11px] font-bold tracking-[0.2em] text-[#d4af37] uppercase mb-1.5">Exclusive Event</div>
               <div className="text-base font-bold text-white">150 Curated Attendees · 21 Nov 2026</div>
             </div>
-          </div>
+          </div> */}
         </div>
         <div>
           <div className="text-[11px] font-bold tracking-[0.25em] text-[#d4af37]/70 uppercase mb-4">The BRT Difference</div>
@@ -44,8 +46,8 @@ const WhyAttend = () => {
               </div>
             ))}
           </div>
-<Link
-  to="/onboarding"
+          <Link 
+          to="#reserve"
   className="bg-gradient-to-r from-[#d4af37] to-[#f2ca46] text-black font-extrabold text-sm tracking-[0.04em] rounded-xl px-8 py-[14px] inline-flex items-center gap-2.5 transition-all duration-200 hover:shadow-lg hover:shadow-[#d4af37]/20 font-manrope"
 >
   Reserve Your Spot <ArrowRight size={17} />
