@@ -1,5 +1,5 @@
 // pages/CreateAccount.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Lock, Check, ArrowRight } from "lucide-react";
 import Logo from "@/assets/home/logo.png";
@@ -25,6 +25,7 @@ const calculatePayment = (plan: "full" | "partial") => {
       depositPercentage: 100,
       autoChargeDate: null,
       isFullyPaid: true,
+      totalDueToday: TICKET_PRICE + 35,
     };
   } else {
     return {
@@ -34,6 +35,7 @@ const calculatePayment = (plan: "full" | "partial") => {
       depositPercentage: 50,
       autoChargeDate: "25 June 2026",
       isFullyPaid: false,
+      totalDueToday: (TICKET_PRICE * 0.5) + 18,
     };
   }
 };
@@ -51,7 +53,8 @@ const CreateAccount = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string>("");
-  
+  const [callbackSuccess, setCallbackSuccess] = useState(false);
+
   // Form data
   const [formData, setFormData] = useState({
     firstName: "",
@@ -71,7 +74,7 @@ const CreateAccount = () => {
   const [selectedPlan, setSelectedPlan] = useState<"full" | "partial" | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  
+
   // Card details for card payment
   const [cardDetails, setCardDetails] = useState({
     cardNumber: "",
@@ -126,6 +129,10 @@ const CreateAccount = () => {
           setError("Please select a payment plan");
           return false;
         }
+        if (selectedPlan === "partial") {
+          setError("Please request a callback to continue with partial payment");
+          return false;
+        }
         break;
       case 4:
         if (!paymentMethod) {
@@ -148,36 +155,32 @@ const CreateAccount = () => {
     return true;
   };
 
-  // Handle payment submission with direct API calls
   const processPaymentAndSave = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // 1. Calculate payment amounts
       const paymentDetails = calculatePayment(selectedPlan!);
-      
-      // 2. Prepare payment data
+
       const paymentData = {
-        plan: selectedPlan!,
-        paymentMethod: paymentMethod!,
-        cardDetails: paymentMethod === "card" ? {
-          cardNumber: cardDetails.cardNumber,
-          cardHolder: cardDetails.cardHolder,
-          expiryDate: cardDetails.expiryDate,
-          cvv: cardDetails.cvv,
-        } : null,
-        user: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-        },
         amount: paymentDetails.depositAmount,
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phone,
+        plan: selectedPlan!,
+        ticketData: {
+          projectDescription: formData.projectDescription,
+          selectedRole: formData.selectedRole,
+          businessUrl: formData.businessUrl || "",
+          companyName: formData.companyName || "",
+          companyUrl: formData.companyUrl || "",
+          linkedInUrl: formData.linkedInUrl || "",
+          investmentFocus: formData.investmentFocus || "",
+        }
       };
 
-      // 3. Process payment through external gateway
-      const paymentResponse = await fetch(`${API_BASE_URL}/payments/process`, {
+      const paymentResponse = await fetch(`${API_BASE_URL}/api/payments/initiate-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -187,18 +190,35 @@ const CreateAccount = () => {
 
       if (!paymentResponse.ok) {
         const errorData = await paymentResponse.json();
-        throw new Error(errorData.message || 'Payment processing failed');
+        throw new Error(errorData.message || 'Payment initiation failed');
       }
 
       const paymentResult = await paymentResponse.json();
-      
+
       if (!paymentResult.success) {
         throw new Error(paymentResult.message || 'Payment failed');
       }
 
-      const transactionId = paymentResult.transactionId || paymentResult.data?.transactionId;
+      if (paymentResult.paymentUrl && paymentResult.paymentData) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = paymentResult.paymentUrl;
 
-      // 4. Prepare application data
+        Object.keys(paymentResult.paymentData).forEach(key => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = paymentResult.paymentData[key];
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+
+      const transactionId = paymentResult.transactionId;
+
       const applicationData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -220,8 +240,7 @@ const CreateAccount = () => {
         paymentMethod: paymentMethod!,
       };
 
-      // 5. Submit application
-      const applicationResponse = await fetch(`${API_BASE_URL}/applications/submit`, {
+      const applicationResponse = await fetch(`${API_BASE_URL}/api/applications/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -235,12 +254,11 @@ const CreateAccount = () => {
       }
 
       const applicationResult = await applicationResponse.json();
-      
+
       if (!applicationResult.success) {
         throw new Error(applicationResult.message || 'Application submission failed');
       }
 
-      // 6. Create ticket
       const ticketData = {
         ticketId: generateTicketId(),
         firstName: formData.firstName,
@@ -286,18 +304,16 @@ const CreateAccount = () => {
       }
 
       const ticketResult = await ticketResponse.json();
-      
+
       if (!ticketResult.success) {
         throw new Error(ticketResult.message || 'Ticket creation failed');
       }
 
-      // 7. Save transaction ID for display
       setTransactionId(transactionId);
-
-      // 8. Success - move to ticket step
       setCurrentStep(5);
-      
+
     } catch (err) {
+      console.error('❌ Payment error:', err);
       setError(err instanceof Error ? err.message : 'Payment processing failed');
     } finally {
       setLoading(false);
@@ -305,15 +321,42 @@ const CreateAccount = () => {
   };
 
   const handleContinue = async () => {
-    if (!validateStep()) return;
-
+    // Step 2 - Verification: Always go to step 3
     if (currentStep === 2) {
       setCurrentStep(3);
       return;
     }
 
+    // Step 3 - Plan: Handle plan selection
+    if (currentStep === 3) {
+      if (!selectedPlan) {
+        setError("Please select a payment plan");
+        return;
+      }
+      // If partial plan is selected, don't proceed
+      if (selectedPlan === "partial") {
+        setError("Please request a callback to continue with partial payment");
+        return;
+      }
+      // Full plan - proceed to payment
+      if (selectedPlan === "full") {
+        setCurrentStep(4);
+        return;
+      }
+      return;
+    }
+
+    // Step 4 - Payment: Validate and process
     if (currentStep === 4) {
+      if (!validateStep()) return;
       await processPaymentAndSave();
+      return;
+    }
+
+    // Step 1 - Application: Validate and proceed
+    if (currentStep === 1) {
+      if (!validateStep()) return;
+      setCurrentStep(2);
       return;
     }
 
@@ -342,12 +385,10 @@ const CreateAccount = () => {
         );
       case 2:
         return (
-          <VerificationStep 
+          <VerificationStep
             formData={formData}
             onConfirm={() => {
-              if (validateStep()) {
-                setCurrentStep(3);
-              }
+              setCurrentStep(3);
             }}
           />
         );
@@ -356,8 +397,19 @@ const CreateAccount = () => {
           <PlanStep
             selectedPlan={selectedPlan}
             setSelectedPlan={setSelectedPlan}
+            onContinue={() => {
+              // Only called when full plan or partial with callback success
+              if (selectedPlan === "full") {
+                setCurrentStep(4);
+              } else if (selectedPlan === "partial") {
+                setCallbackSuccess(true);
+                setCurrentStep(4);
+              }
+            }}
+            setError={setError}
           />
         );
+
       case 4:
         return (
           <PaymentStep
@@ -370,6 +422,8 @@ const CreateAccount = () => {
             handleCardChange={handleCardChange}
             error={error}
             loading={loading}
+            onPay={processPaymentAndSave}
+            onBack={handleBack} // Pass back handler
           />
         );
       case 5:
@@ -390,14 +444,20 @@ const CreateAccount = () => {
           if (!formData.businessUrl || !formData.companyName || !formData.companyUrl || !formData.linkedInUrl) return true;
         }
         return false;
+
       case 3:
-        return !selectedPlan;
+        // Disable continue if no plan selected OR if partial plan is selected
+        if (!selectedPlan) return true;
+        if (selectedPlan === "partial") return true;
+        return false;
+
       case 4:
         if (!paymentMethod) return true;
         if (paymentMethod === "card") {
           return !cardDetails.cardNumber || !cardDetails.cardHolder || !cardDetails.expiryDate || !cardDetails.cvv;
         }
         return !acceptedTerms;
+
       default:
         return false;
     }
@@ -407,6 +467,11 @@ const CreateAccount = () => {
     if (loading) return "Processing...";
     if (currentStep === 4) return "Pay Now";
     if (currentStep === 5) return "Get Your Ticket";
+    if (currentStep === 3) {
+      if (!selectedPlan) return "Select a Plan";
+      if (selectedPlan === "partial") return "Request Callback to Continue";
+      return "Continue to Payment";
+    }
     return "Continue";
   };
 
@@ -416,16 +481,16 @@ const CreateAccount = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#050505]/85 backdrop-blur-[20px] border-b border-white/5">
         <div className="max-w-[1200px] mx-auto px-6 h-[62px] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => navigate('/')}
               className="mr-2 transition-colors text-white/30 hover:text-white/60"
             >
               <ChevronLeft className="w-[18px] h-[18px]" />
             </button>
             <div className="flex items-center gap-3">
-              <img 
-                src={Logo} 
-                alt="BRT150" 
+              <img
+                src={Logo}
+                alt="BRT150"
                 className="h-8 w-auto object-contain"
               />
               <div>
@@ -445,7 +510,7 @@ const CreateAccount = () => {
 
       {/* Main Content */}
       <div className="min-h-screen pt-[62px] bg-[#050505]">
-        <div className="max-w-[680px] mx-auto px-6 py-16">
+        <div className="max-w-[1100px] mx-auto px-6 py-16">
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="font-bold leading-[1.15] mb-4 text-[clamp(2rem,5vw,2.75rem)] text-white">
@@ -461,14 +526,13 @@ const CreateAccount = () => {
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-start">
                 <div className="flex flex-col items-center gap-2 w-[76px]">
-                  <div 
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                      step.number < currentStep 
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${step.number < currentStep
                         ? 'bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] shadow-[0_0_18px_rgba(201,162,39,0.3)]'
                         : step.number === currentStep
-                        ? 'border-2 border-[#C9A227] text-[#C9A227] bg-transparent'
-                        : 'border border-white/10 text-white/20 bg-transparent'
-                    }`}
+                          ? 'border-2 border-[#C9A227] text-[#C9A227] bg-transparent'
+                          : 'border border-white/10 text-white/20 bg-transparent'
+                      }`}
                   >
                     {step.number < currentStep ? (
                       <Check className="w-[13px] h-[13px]" strokeWidth={3} />
@@ -476,25 +540,23 @@ const CreateAccount = () => {
                       String(step.number).padStart(2, '0')
                     )}
                   </div>
-                  <span 
-                    className={`text-[10px] font-semibold tracking-wide text-center leading-tight ${
-                      step.number === currentStep 
+                  <span
+                    className={`text-[10px] font-semibold tracking-wide text-center leading-tight ${step.number === currentStep
                         ? 'text-[#C9A227]'
                         : step.number < currentStep
-                        ? 'text-white/45'
-                        : 'text-white/20'
-                    }`}
+                          ? 'text-white/45'
+                          : 'text-white/20'
+                      }`}
                   >
                     {step.label}
                   </span>
                 </div>
                 {index < steps.length - 1 && (
-                  <div 
-                    className={`mt-[18px] transition-all duration-500 w-[28px] h-[1px] ${
-                      step.number < currentStep 
+                  <div
+                    className={`mt-[18px] transition-all duration-500 w-[28px] h-[1px] ${step.number < currentStep
                         ? 'bg-gradient-to-r from-[#C9A227] to-[#DFBA3A]'
                         : 'bg-white/5'
-                    }`}
+                      }`}
                   />
                 )}
               </div>
@@ -506,35 +568,39 @@ const CreateAccount = () => {
             {/* Step Content */}
             {renderStepContent()}
 
-            {/* Navigation Buttons */}
+            {/* Navigation Buttons - Hide for step 5 (Ticket) */}
+
             {currentStep < 5 && (
               <div className="flex flex-col gap-3 pt-2 mt-8 border-t border-white/5">
                 <div className="flex justify-between">
-                  <button
-                    onClick={handleBack}
-                    disabled={currentStep === 1}
-                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all ${
-                      currentStep === 1
-                        ? "opacity-50 cursor-not-allowed text-gray-600"
-                        : "text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Back
-                  </button>
+                  {/* Show Back button on all steps except step 1 */}
+                  {currentStep !== 1 && (
+                    <button
+                      onClick={handleBack}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all text-white hover:bg-white/5"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Back
+                    </button>
+                  )}
 
-                  <button
-                    onClick={handleContinue}
-                    disabled={isContinueDisabled()}
-                    className={`inline-flex items-center justify-center gap-2.5 font-bold rounded-xl transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed px-8 py-4 text-[15px] ${
-                      isContinueDisabled()
-                        ? "bg-gray-700 text-gray-400"
-                        : "bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] shadow-[0_4px_20px_rgba(201,162,39,0.3)]"
-                    }`}
-                  >
-                    {getButtonText()}
-                    {!loading && <ArrowRight className="w-4 h-4" />}
-                  </button>
+                  {/* Empty div to maintain spacing when Back is hidden */}
+                  {currentStep === 1 && <div />}
+
+                  {/* Show Continue button for steps 1, 2, 3 - NOT for step 4 */}
+                  {currentStep !== 4 && (
+                    <button
+                      onClick={handleContinue}
+                      disabled={isContinueDisabled()}
+                      className={`inline-flex items-center justify-center gap-2.5 font-bold rounded-xl transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed px-8 py-4 text-[15px] ${isContinueDisabled()
+                          ? "bg-gray-700 text-gray-400"
+                          : "bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] shadow-[0_4px_20px_rgba(201,162,39,0.3)]"
+                        }`}
+                    >
+                      {getButtonText()}
+                      {!loading && <ArrowRight className="w-4 h-4" />}
+                    </button>
+                  )}
                 </div>
                 <p className="text-center text-xs leading-relaxed pt-1 text-white/20">
                   By applying you agree to our Terms of Service and Privacy Policy.
@@ -558,8 +624,8 @@ const CreateAccount = () => {
               background: step.number === currentStep
                 ? 'linear-gradient(90deg, #C9A227, #DFBA3A)'
                 : step.number < currentStep
-                ? 'rgba(201, 162, 39, 0.5)'
-                : 'rgba(255,255,255,0.15)',
+                  ? 'rgba(201, 162, 39, 0.5)'
+                  : 'rgba(255,255,255,0.15)',
             }}
             onClick={() => {
               if (step.number < currentStep) {

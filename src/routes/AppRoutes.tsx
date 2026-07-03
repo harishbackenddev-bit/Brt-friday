@@ -10,6 +10,7 @@ import AdminLayout from "@/layouts/admin/AdminLayout";
 
 // Website Pages
 import Home from "@/pages/website/Home";
+import Ticket from "@/pages/website/Ticket/Ticket";
 
 // Auth Pages
 import Login from "@/pages/auth/Login";
@@ -33,6 +34,7 @@ const AppRoutes = () => {
       {/* WEBSITE - Public */}
       <Route path="/" element={<WebsiteLayout />}>
         <Route index element={<Home />} />
+        <Route path="/ticket" element={<Ticket />} />
       </Route>
 
       {/* AUTH - Public */}
