@@ -23,6 +23,8 @@ import {
   X
 } from "lucide-react";
 
+// ✅ NOTE: this already includes '/api' — routes below must NOT
+// prepend another '/api' segment.
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 interface TicketDetailData {
@@ -54,6 +56,10 @@ interface TicketDetailData {
   projectDescription?: string;
   companyUrl?: string;
   investmentFocus?: string;
+  // ✅ NEW: manual partial-payment workflow fields
+  partialWorkflowStatus?: string | null;
+  depositAmount?: number | null;
+  paymentLink?: string | null;
 }
 
 const TicketDetail = () => {
@@ -72,6 +78,8 @@ const TicketDetail = () => {
     setLoading(true);
     setError(null);
     try {
+      // ✅ FIXED: was `${API_BASE_URL}/api/admin/tickets/${id}`, which
+      // doubled the /api segment (API_BASE_URL already ends in /api).
       const response = await fetch(`${API_BASE_URL}/api/admin/tickets/${id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch ticket');
@@ -91,24 +99,58 @@ const TicketDetail = () => {
     }
   };
 
+  // ✅ FIXED: previously POSTed to a nonexistent
+  // '/tickets/:mongoId/send-payment-link' route with no body. This now
+  // prompts for the PayFast link + deposit amount and calls the real
+  // endpoint, keyed by `ticketData.ticketId` (the human-readable ID,
+  // e.g. "BRT-2026-0042") — NOT `ticketData._id`, since that's what the
+  // partial-payment routes expect.
   const handleSendPaymentLink = async () => {
     if (!ticketData) return;
-    
+
+    const paymentLink = window.prompt(
+      `Paste the PayFast payment link for ${ticketData.firstName} ${ticketData.lastName} (${ticketData.ticketId}):`
+    );
+    if (!paymentLink) return;
+
+    const depositAmountStr = window.prompt(
+      `Deposit amount for this link (R), out of R${ticketData.totalAmount}:`,
+      String(ticketData.depositAmount ?? Math.round(ticketData.totalAmount / 2))
+    );
+    if (!depositAmountStr) return;
+
+    const depositAmount = Number(depositAmountStr);
+    if (isNaN(depositAmount) || depositAmount <= 0) {
+      alert("Please enter a valid deposit amount.");
+      return;
+    }
+
     setSendingLink(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/tickets/${ticketData._id}/send-payment-link`, {
-        method: 'POST',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to send payment link');
-      }
-      
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/partial-payments/${ticketData.ticketId}/payment-link`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ paymentLink, depositAmount }),
+        }
+      );
+
       const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to send payment link');
+      }
+
       alert(result.message || 'Payment link sent successfully!');
+      fetchTicket(); // refresh so the page reflects the new workflow status
     } catch (error) {
       console.error('Error sending payment link:', error);
-      alert('Failed to send payment link. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to send payment link. Please try again.');
     } finally {
       setSendingLink(false);
     }
@@ -216,6 +258,9 @@ const TicketDetail = () => {
 
   const isPartial = ticketData.selectedPlan === "partial";
   const hasCallbackData = ticketData.contactMethod && ticketData.contactValue;
+  const terminalWorkflowStatuses = ["Fully Paid", "Ticket Issued"];
+  const canSendPaymentLink =
+    isPartial && !terminalWorkflowStatuses.includes(ticketData.partialWorkflowStatus || "");
 
   return (
     <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar bg-[#050505]">
@@ -244,6 +289,11 @@ const TicketDetail = () => {
               {getStatusIcon(ticketData.status)}
               {ticketData.status.charAt(0).toUpperCase() + ticketData.status.slice(1)}
             </span>
+            {isPartial && ticketData.partialWorkflowStatus && (
+              <span className="text-xs px-2 py-1 rounded border text-[#C9A227] bg-[#C9A227]/10 border-[#C9A227]/30">
+                {ticketData.partialWorkflowStatus}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -436,6 +486,22 @@ const TicketDetail = () => {
                     </div>
                   </div>
                 </div>
+                {ticketData.paymentLink && (
+                  <div className="flex items-start gap-3">
+                    <ExternalLink className="w-[14px] h-[14px] text-white/30 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-white/40 mb-0.5">Current Payment Link</p>
+                      <a
+                        href={ticketData.paymentLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-[#C9A227] hover:underline break-all"
+                      >
+                        {ticketData.paymentLink}
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -544,12 +610,12 @@ const TicketDetail = () => {
           </div>
 
           {/* Actions */}
-          {/* <div className="bg-[#0E0909] border border-white/5 rounded-xl p-6">
+          <div className="bg-[#0E0909] border border-white/5 rounded-xl p-6">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-4">
               Actions
             </h2>
             <div className="space-y-2">
-              {isPartial && ticketData.status !== "confirmed" && (
+              {canSendPaymentLink && (
                 <button 
                   onClick={handleSendPaymentLink}
                   disabled={sendingLink}
@@ -563,7 +629,7 @@ const TicketDetail = () => {
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
-                      Send Payment Reminder
+                      {ticketData.paymentLink ? "Update Payment Link" : "Send Payment Link"}
                     </>
                   )}
                 </button>
@@ -590,14 +656,14 @@ const TicketDetail = () => {
               )}
               
               <button 
-                onClick={() => window.open(`/ticket/${ticketData._id}`, '_blank')}
+                onClick={() => window.open(`/ticket/${ticketData.ticketId}`, '_blank')}
                 className="w-full px-4 py-2.5 text-sm font-medium text-white/60 border border-white/10 rounded-lg hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
               >
                 <ExternalLink className="w-4 h-4" />
                 View Public Ticket
               </button>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>

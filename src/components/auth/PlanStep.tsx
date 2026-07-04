@@ -3,11 +3,30 @@ import React, { useState } from "react";
 import { Crown, Check, Phone, Smartphone, Mail, ArrowRight, X } from "lucide-react";
 import { TICKET_PRICE, calculatePayment } from "@/utils/paymentUtils";
 
+interface ApplicantData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  projectDescription?: string;
+  selectedRole: string;
+  businessUrl?: string;
+  companyName?: string;
+  companyUrl?: string;
+  linkedInUrl?: string;
+  investmentFocus?: string;
+}
+
 interface PlanStepProps {
   selectedPlan: "full" | "partial" | null;
   setSelectedPlan: (plan: "full" | "partial") => void;
   onContinue?: () => void;
   setError?: (error: string | null) => void;
+  // ✅ NEW: applicant data collected in step 1, needed to build a
+  // complete /request-partial-payment payload (the backend requires
+  // firstName/lastName/email/phoneNumber + ticketData, not just the
+  // contact-preference fields collected in this step's own form).
+  applicantData: ApplicantData;
 }
 
 interface CallbackFormData {
@@ -27,7 +46,8 @@ const PlanStep: React.FC<PlanStepProps> = ({
   selectedPlan, 
   setSelectedPlan,
   onContinue,
-  setError
+  setError,
+  applicantData,
 }) => {
   const [callbackData, setCallbackData] = useState<CallbackFormData>({
     whatsapp: "",
@@ -42,14 +62,16 @@ const PlanStep: React.FC<PlanStepProps> = ({
     whatsapp: "",
     phone: "",
     email: "",
-    reference: "BRT150-CB-2026",
+    reference: "",
   });
 
   // Calculate amounts for each plan
   const fullPlan = calculatePayment("full");
   const partialPlan = calculatePayment("partial");
   
-  // Constants
+  // ✅ FIXED: API_BASE_URL already includes '/api' (e.g.
+  // 'http://localhost:5000/api'), so routes below must NOT prepend
+  // another '/api' — that was producing '/api/api/...' 404s.
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const plans = [
@@ -111,30 +133,49 @@ const PlanStep: React.FC<PlanStepProps> = ({
     setCallbackError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/request-callback`, {
+      // ✅ Full payload matching the backend's requestPartialPaymentService:
+      // applicant identity + role/company details from step 1, plus the
+      // contact-preference fields collected on this step (falling back to
+      // step-1 values when this form's optional fields are left blank).
+      const payload = {
+        firstName: applicantData.firstName,
+        lastName: applicantData.lastName,
+        email: callbackData.email || applicantData.email,
+        phoneNumber: callbackData.phone || applicantData.phone,
+        whatsapp: callbackData.whatsapp || "",
+        ticketData: {
+          projectDescription: applicantData.projectDescription || "",
+          selectedRole: applicantData.selectedRole,
+          businessUrl: applicantData.businessUrl || "",
+          companyName: applicantData.companyName || "",
+          companyUrl: applicantData.companyUrl || "",
+          linkedInUrl: applicantData.linkedInUrl || "",
+          investmentFocus: applicantData.investmentFocus || "",
+        },
+      };
+
+      // ✅ FIXED: was `${API_BASE_URL}/api/request-partial-payment`,
+      // which doubled the /api segment. API_BASE_URL already ends in /api.
+      const response = await fetch(`${API_BASE_URL}/api/request-partial-payment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...callbackData,
-          plan: "partial",
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to request callback");
-      }
-
       const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to request partial payment link");
+      }
 
       // Set response data for modal
       setCallbackResponse({
         whatsapp: callbackData.whatsapp || "Not provided",
-        phone: callbackData.phone || "Not provided",
-        email: callbackData.email || "Not provided",
-        reference: result.reference || "BRT150-CB-2026",
+        phone: callbackData.phone || applicantData.phone || "Not provided",
+        email: callbackData.email || applicantData.email || "Not provided",
+        reference: result.data?.ticketId || "",
       });
 
       setCallbackSuccess(true);
@@ -502,10 +543,12 @@ const PlanStep: React.FC<PlanStepProps> = ({
                   <span className="text-xs font-bold text-white/70">{callbackResponse.email}</span>
                 </div>
               )}
-              <div className="flex justify-between pt-1 border-t border-white/6">
-                <span className="text-xs font-medium text-white/35">Reference</span>
-                <span className="text-xs font-bold text-[#C9A227]">{callbackResponse.reference}</span>
-              </div>
+              {callbackResponse.reference && (
+                <div className="flex justify-between pt-1 border-t border-white/6">
+                  <span className="text-xs font-medium text-white/35">Ticket Reference</span>
+                  <span className="text-xs font-bold text-[#C9A227]">{callbackResponse.reference}</span>
+                </div>
+              )}
             </div>
 
             {/* Close Button */}

@@ -12,6 +12,8 @@ import PaymentStep from "@/components/auth/PaymentStep";
 import TicketStep from "@/components/auth/TicketStep";
 
 // Constants
+// ✅ NOTE: this already includes '/api' — every fetch below must NOT
+// prepend another '/api' segment, or it 404s against '/api/api/...'.
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TICKET_PRICE = 2000;
 
@@ -38,13 +40,6 @@ const calculatePayment = (plan: "full" | "partial") => {
       totalDueToday: (TICKET_PRICE * 0.5) + 18,
     };
   }
-};
-
-// Generate ticket ID
-const generateTicketId = () => {
-  const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-  return `BRT-${year}-${random}`;
 };
 
 const CreateAccount = () => {
@@ -180,7 +175,11 @@ const CreateAccount = () => {
         }
       };
 
-      const paymentResponse = await fetch(`${API_BASE_URL}/api/payments/initiate-payment`, {
+      // ✅ FIXED: was `${API_BASE_URL}/api/payments/initiate-payment`,
+      // which doubled the /api segment (API_BASE_URL already ends in /api).
+      // The payfast router is mounted at both '/api' and '/api/payments',
+      // so '/initiate-payment' alone resolves correctly.
+      const paymentResponse = await fetch(`${API_BASE_URL}/api/initiate-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -199,6 +198,15 @@ const CreateAccount = () => {
         throw new Error(paymentResult.message || 'Payment failed');
       }
 
+      // The backend's initiatePaymentService always returns paymentUrl +
+      // paymentData for redirecting to PayFast's hosted checkout — it
+      // creates the ticket record itself (status: 'pending') before
+      // returning this. There is no separate /applications/submit or
+      // /tickets/create call needed here: the ticket already exists, and
+      // it gets marked completed/partial by the PayFast ITN webhook once
+      // payment actually goes through. Submitting the form below
+      // navigates the browser away from this page entirely, so nothing
+      // after this block would ever run for the full-payment flow.
       if (paymentResult.paymentUrl && paymentResult.paymentData) {
         const form = document.createElement('form');
         form.method = 'POST';
@@ -217,100 +225,12 @@ const CreateAccount = () => {
         return;
       }
 
-      const transactionId = paymentResult.transactionId;
-
-      const applicationData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        projectDescription: formData.projectDescription,
-        selectedRole: formData.selectedRole,
-        businessUrl: formData.businessUrl || "",
-        companyName: formData.companyName || "",
-        companyUrl: formData.companyUrl || "",
-        linkedInUrl: formData.linkedInUrl || "",
-        investmentFocus: formData.investmentFocus || "",
-        plan: selectedPlan!,
-        paymentStatus: selectedPlan === "full" ? "completed" : "partial",
-        transactionId: transactionId,
-        amountPaid: paymentDetails.depositAmount,
-        totalAmount: TICKET_PRICE,
-        outstandingBalance: paymentDetails.remainingBalance,
-        paymentMethod: paymentMethod!,
-      };
-
-      const applicationResponse = await fetch(`${API_BASE_URL}/api/applications/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(applicationData),
-      });
-
-      if (!applicationResponse.ok) {
-        const errorData = await applicationResponse.json();
-        throw new Error(errorData.message || 'Application submission failed');
-      }
-
-      const applicationResult = await applicationResponse.json();
-
-      if (!applicationResult.success) {
-        throw new Error(applicationResult.message || 'Application submission failed');
-      }
-
-      const ticketData = {
-        ticketId: generateTicketId(),
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phoneNumber: formData.phone,
-        projectDescription: formData.projectDescription,
-        selectedRole: formData.selectedRole,
-        businessUrl: formData.businessUrl || "",
-        companyName: formData.companyName || "",
-        companyUrl: formData.companyUrl || "",
-        linkedInUrl: formData.linkedInUrl || "",
-        investmentFocus: formData.investmentFocus || "",
-        selectedPlan: selectedPlan!,
-        paymentMethod: paymentMethod!,
-        paymentStatus: selectedPlan === "full" ? "completed" : "partial",
-        amountPaid: paymentDetails.depositAmount,
-        totalAmount: TICKET_PRICE,
-        outstandingBalance: paymentDetails.remainingBalance,
-        transactionId: transactionId,
-        paymentDate: new Date().toISOString(),
-        cardLastFour: paymentMethod === "card" ? cardDetails.cardNumber.slice(-4) : null,
-        cardType: paymentMethod === "card" ? "Unknown" : null,
-        status: "pending",
-        eventName: "BRT150 Demo Day",
-        nextDueDate: "2026-12-21",
-        eventDate: new Date("2026-11-21").toISOString(),
-        isGuest: true,
-        submittedAt: new Date().toISOString(),
-      };
-
-      const ticketResponse = await fetch(`${API_BASE_URL}/tickets/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(ticketData),
-      });
-
-      if (!ticketResponse.ok) {
-        const errorData = await ticketResponse.json();
-        throw new Error(errorData.message || 'Ticket creation failed');
-      }
-
-      const ticketResult = await ticketResponse.json();
-
-      if (!ticketResult.success) {
-        throw new Error(ticketResult.message || 'Ticket creation failed');
-      }
-
-      setTransactionId(transactionId);
-      setCurrentStep(5);
+      // If we get here, the backend didn't return a redirect URL —
+      // treat as an error rather than falling through to legacy
+      // application/ticket creation calls that no longer match the
+      // current backend (there is no /applications/submit or
+      // /tickets/create route).
+      throw new Error('Payment initiation did not return a redirect URL');
 
     } catch (err) {
       console.error('❌ Payment error:', err);
@@ -407,6 +327,23 @@ const CreateAccount = () => {
               }
             }}
             setError={setError}
+            // ✅ NEW: PlanStep needs these to build a complete
+            // /request-partial-payment payload — it previously only
+            // sent whatsapp/phone/email with no applicant identity or
+            // ticket details attached, which the backend requires.
+            applicantData={{
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              email: formData.email,
+              phone: formData.phone,
+              projectDescription: formData.projectDescription,
+              selectedRole: formData.selectedRole,
+              businessUrl: formData.businessUrl,
+              companyName: formData.companyName,
+              companyUrl: formData.companyUrl,
+              linkedInUrl: formData.linkedInUrl,
+              investmentFocus: formData.investmentFocus,
+            }}
           />
         );
 

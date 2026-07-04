@@ -36,6 +36,10 @@ interface Ticket {
   projectDescription?: string;
   createdAt?: string;
   updatedAt?: string;
+  // ✅ NEW: manual partial-payment workflow status (see ticket-schema.ts)
+  partialWorkflowStatus?: string | null;
+  depositAmount?: number | null;
+  paymentLink?: string | null;
 }
 
 interface ApiResponse {
@@ -49,6 +53,8 @@ interface ApiResponse {
   };
 }
 
+// ✅ NOTE: this already includes '/api' — routes below must NOT
+// prepend another '/api' segment.
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const BRTTickets = () => {
@@ -58,6 +64,7 @@ const BRTTickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sendingLinkFor, setSendingLinkFor] = useState<string | null>(null);
 
   // Stats
   const [stats, setStats] = useState({
@@ -78,6 +85,8 @@ const BRTTickets = () => {
     try {
       const token = localStorage.getItem("token");
 
+      // ✅ FIXED: was `${API_BASE_URL}/api/admin/tickets`, which doubled
+      // the /api segment (API_BASE_URL already ends in /api).
       const response = await fetch(`${API_BASE_URL}/api/admin/tickets`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -162,30 +171,65 @@ const BRTTickets = () => {
     }
   };
 
-  const handleViewDetails = (ticketId: string) => {
-    navigate(`/admin/brt-tickets/${ticketId}`);
+  const handleViewDetails = (mongoId: string) => {
+    navigate(`/admin/brt-tickets/${mongoId}`);
   };
 
-  const handleSendPaymentLink = async (ticketId: string) => {
+  // ✅ FIXED: previously POSTed to a nonexistent
+  // '/api/tickets/:id/send-payment-link' route with no body — there was
+  // no actual payment link being sent anywhere. This now:
+  //   1. Prompts the admin for the PayFast link + deposit amount
+  //      (matches the manual workflow: staff creates the link in the
+  //      PayFast dashboard themselves, then pastes it here)
+  //   2. Calls the real endpoint, keyed by the ticket's `ticketId`
+  //      string (e.g. "BRT-2026-0042") — NOT the Mongo `_id`, since
+  //      that's what the partial-payment routes expect
+  const handleSendPaymentLink = async (ticket: Ticket) => {
+    const paymentLink = window.prompt(
+      `Paste the PayFast payment link for ${ticket.firstName} ${ticket.lastName} (${ticket.ticketId}):`
+    );
+    if (!paymentLink) return;
+
+    const depositAmountStr = window.prompt(
+      `Deposit amount for this link (R), out of R${ticket.totalAmount}:`,
+      String(ticket.depositAmount ?? Math.round(ticket.totalAmount / 2))
+    );
+    if (!depositAmountStr) return;
+
+    const depositAmount = Number(depositAmountStr);
+    if (isNaN(depositAmount) || depositAmount <= 0) {
+      alert("Please enter a valid deposit amount.");
+      return;
+    }
+
+    setSendingLinkFor(ticket._id);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/send-payment-link`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/partial-payments/${ticket.ticketId}/payment-link`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ paymentLink, depositAmount }),
         }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to send payment link');
-      }
-      
+      );
+
       const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to send payment link');
+      }
+
       alert(result.message || 'Payment link sent successfully!');
+      fetchTickets(); // refresh so the row reflects the new workflow status
     } catch (error) {
       console.error('Error sending payment link:', error);
-      alert('Failed to send payment link. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to send payment link. Please try again.');
+    } finally {
+      setSendingLinkFor(null);
     }
   };
 
@@ -201,6 +245,14 @@ const BRTTickets = () => {
   });
 
   const paymentFilters = ["All", "Full Payment", "Partial Payment"];
+
+  // A partial ticket can still be sent a link if it hasn't reached a
+  // terminal workflow state yet (Fully Paid / Ticket Issued).
+  const canSendPaymentLink = (ticket: Ticket) => {
+    if (ticket.selectedPlan !== "partial") return false;
+    const terminal = ["Fully Paid", "Ticket Issued"];
+    return !terminal.includes(ticket.partialWorkflowStatus || "");
+  };
 
   if (loading) {
     return (
@@ -342,6 +394,11 @@ const BRTTickets = () => {
                             <div className="text-orange-400 text-xs mt-0.5">
                               Owes: R{ticket.outstandingBalance?.toLocaleString() || 0}
                             </div>
+                            {ticket.partialWorkflowStatus && (
+                              <div className="text-xs text-[#C9A227] mt-0.5">
+                                {ticket.partialWorkflowStatus}
+                              </div>
+                            )}
                             {/* Show contact method from callback request */}
                             {ticket.contactMethod && ticket.contactValue && (
                               <div className="text-xs text-white/30">
@@ -366,13 +423,18 @@ const BRTTickets = () => {
                         >
                           <Eye className="w-[15px] h-[15px] text-[#C9A227]" />
                         </button>
-                        {ticket.selectedPlan === "partial" && ticket.status !== "confirmed" && (
+                        {canSendPaymentLink(ticket) && (
                           <button 
-                            onClick={() => handleSendPaymentLink(ticket._id)}
+                            onClick={() => handleSendPaymentLink(ticket)}
+                            disabled={sendingLinkFor === ticket._id}
                             title="Send payment link" 
-                            className="p-1.5 hover:bg-blue-400/10 rounded transition-colors"
+                            className="p-1.5 hover:bg-blue-400/10 rounded transition-colors disabled:opacity-40"
                           >
-                            <Send className="w-[15px] h-[15px] text-blue-400" />
+                            {sendingLinkFor === ticket._id ? (
+                              <Loader2 className="w-[15px] h-[15px] text-blue-400 animate-spin" />
+                            ) : (
+                              <Send className="w-[15px] h-[15px] text-blue-400" />
+                            )}
                           </button>
                         )}
                       </div>
