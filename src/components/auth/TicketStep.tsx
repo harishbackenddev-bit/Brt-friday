@@ -1,8 +1,9 @@
 // components/auth/TicketStep.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Check, X, Download, FileText, Eye, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 
 interface TicketStepProps {
   formData: {
@@ -47,6 +48,8 @@ const TicketStep: React.FC<TicketStepProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingType, setGeneratingType] = useState<'view' | 'download' | null>(null);
+  // ✅ NEW: data URL for the on-screen + in-PDF QR code
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const fullName = `${formData.firstName} ${formData.lastName}`.trim() || 'Attendee';
   
   // Get current date
@@ -76,11 +79,31 @@ const TicketStep: React.FC<TicketStepProps> = ({
     : "21 November 2026";
   const displayStatus = ticketData?.status || "confirmed";
 
+  // ✅ NEW: the value encoded in the QR — matches the format the admin
+  // scanner already knows how to parse (a /ticket?ticketId=... URL).
+  const ticketScanUrl = `${window.location.origin}/ticket?ticketId=${displayTicketId}`;
+
+  // ✅ NEW: generate the QR code once we know the real ticket ID, so it's
+  // ready for both the on-screen preview and PDF embedding.
+  useEffect(() => {
+    QRCode.toDataURL(ticketScanUrl, {
+      width: 300,
+      margin: 1,
+      color: {
+        dark: "#050505",
+        light: "#FFFFFF",
+      },
+    })
+      .then(setQrCodeDataUrl)
+      .catch((err) => console.error("Failed to generate ticket QR code:", err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayTicketId]);
+
   const handleClose = () => {
     if (onClose) onClose();
   };
 
-  const generateTicketPDF = (type: 'view' | 'download') => {
+  const generateTicketPDF = async (type: 'view' | 'download') => {
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
@@ -152,6 +175,26 @@ const TicketStep: React.FC<TicketStepProps> = ({
     pdf.setTextColor(34, 197, 94);
     pdf.setFontSize(11);
     pdf.text('✓ CONFIRMED', valueX, yPos - lineHeight);
+
+    // ✅ NEW: embed the scannable QR code below the details block.
+    // Reuse the already-generated data URL when we have it (avoids a
+    // redundant async render), otherwise generate one on the fly.
+    const qrForPdf =
+      qrCodeDataUrl || (await QRCode.toDataURL(ticketScanUrl, { width: 300, margin: 1 }));
+
+    const qrSize = 38; // mm
+    const qrX = (pageWidth - qrSize) / 2;
+    const qrY = yPos + 10;
+
+    // White backing so the QR stays scannable against the dark background
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(qrX - 4, qrY - 4, qrSize + 8, qrSize + 8, 3, 3, 'F');
+    pdf.addImage(qrForPdf, 'PNG', qrX, qrY, qrSize, qrSize);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(180, 180, 180);
+    pdf.text('Scan this code at entry', pageWidth / 2, qrY + qrSize + 10, { align: 'center' });
     
     // Footer
     const footerY = pageHeight - 25;
@@ -239,14 +282,14 @@ const TicketStep: React.FC<TicketStepProps> = ({
     pdf.save(`receipt-${displayTicketId}.pdf`);
   };
 
-  const handleViewTicket = () => {
+  const handleViewTicket = async () => {
     if (onViewTicket) {
       onViewTicket();
     } else {
       setGeneratingType('view');
       setIsGenerating(true);
       try {
-        generateTicketPDF('view');
+        await generateTicketPDF('view');
       } catch (error) {
         console.error('Error viewing ticket:', error);
       } finally {
@@ -256,11 +299,11 @@ const TicketStep: React.FC<TicketStepProps> = ({
     }
   };
 
-  const handleDownloadTicket = () => {
+  const handleDownloadTicket = async () => {
     setGeneratingType('download');
     setIsGenerating(true);
     try {
-      generateTicketPDF('download');
+      await generateTicketPDF('download');
     } catch (error) {
       console.error('Error downloading ticket:', error);
     } finally {
@@ -337,6 +380,26 @@ const TicketStep: React.FC<TicketStepProps> = ({
           <FileText className="w-3.5 h-3.5 text-[#C9A227]" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-[#C9A227]">
             Ticket #{displayTicketId}
+          </span>
+        </div>
+
+        {/* ✅ NEW: Scannable QR code — same code is embedded in the PDF */}
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <div className="p-3 rounded-xl bg-white">
+            {qrCodeDataUrl ? (
+              <img
+                src={qrCodeDataUrl}
+                alt={`QR code for ticket ${displayTicketId}`}
+                className="w-32 h-32"
+              />
+            ) : (
+              <div className="w-32 h-32 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-[#050505]/40" />
+              </div>
+            )}
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">
+            Scan at entry
           </span>
         </div>
 

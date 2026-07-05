@@ -7,17 +7,26 @@ import TicketStep from '@/components/auth/TicketStep';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-interface TicketData {
+// ✅ Full shape TicketStep needs for its `ticketData` prop. Kept here
+// (rather than the old slimmer TicketData interface) since TicketStep
+// requires all of these fields once `ticketData` is passed at all.
+interface FullTicketData {
+  _id: string;
+  ticketId: string;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
-  selectedPlan: 'full' | 'partial';
-  ticketId: string;
+  selectedPlan: string;
+  paymentMethod: string;
   paymentStatus: string;
-  status: string;
   amountPaid: number;
   totalAmount: number;
+  outstandingBalance: number;
+  transactionId: string;
+  eventName: string;
+  eventDate: string;
+  status: string;
 }
 
 const Ticket = () => {
@@ -32,7 +41,13 @@ const Ticket = () => {
     phone: '',
   });
   const [selectedPlan, setSelectedPlan] = useState<'full' | 'partial' | null>(null);
+  // ✅ FIXED: previously this ticketId state was set but never actually
+  // passed down to <TicketStep>, so the modal always showed the
+  // "BRT-2026-XXXX" placeholder instead of the real ticket ID — which
+  // would also make the new QR code encode the wrong ticket. We now
+  // build a full ticketData object and pass it through.
   const [ticketId, setTicketId] = useState<string>('');
+  const [fullTicketData, setFullTicketData] = useState<FullTicketData | null>(null);
 
   const ticketRef = searchParams.get('ref') || searchParams.get('ticketId');
 
@@ -61,6 +76,29 @@ const Ticket = () => {
         });
         setSelectedPlan(data.selectedPlan || null);
         setTicketId(data.ticketId || ticketRef);
+
+        // ✅ NEW: normalize whatever the API returned into the shape
+        // TicketStep expects, filling in safe defaults for any fields
+        // the payments endpoint doesn't return.
+        setFullTicketData({
+          _id: data._id || '',
+          ticketId: data.ticketId || ticketRef,
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
+          phoneNumber: data.phoneNumber || '',
+          selectedPlan: data.selectedPlan || 'full',
+          paymentMethod: data.paymentMethod || '',
+          paymentStatus: data.paymentStatus || '',
+          amountPaid: data.amountPaid ?? 0,
+          totalAmount: data.totalAmount ?? 0,
+          outstandingBalance: data.outstandingBalance ?? 0,
+          transactionId: data.transactionId || '',
+          eventName: data.eventName || 'BRT150 Demo Day',
+          eventDate: data.eventDate || '',
+          status: data.status || 'confirmed',
+        });
+
         setLoading(false);
 
       } catch (err) {
@@ -157,7 +195,13 @@ const Ticket = () => {
           </div>
 
           {/* Ticket Step Component */}
-          <TicketStep formData={formData} selectedPlan={selectedPlan} />
+          {/* ✅ NEW: pass the full ticketData so TicketStep shows real
+              values and the QR code encodes the correct ticket ID */}
+          <TicketStep
+            formData={formData}
+            selectedPlan={selectedPlan}
+            ticketData={fullTicketData || undefined}
+          />
         </div>
       </div>
     </div>
