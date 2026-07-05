@@ -12,8 +12,6 @@ import PaymentStep from "@/components/auth/PaymentStep";
 import TicketStep from "@/components/auth/TicketStep";
 
 // Constants
-// ✅ NOTE: this already includes '/api' — every fetch below must NOT
-// prepend another '/api' segment, or it 404s against '/api/api/...'.
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TICKET_PRICE = 2000;
 
@@ -157,6 +155,10 @@ const CreateAccount = () => {
     try {
       const paymentDetails = calculatePayment(selectedPlan!);
 
+      // ✅ Get the payment method from state
+      // paymentMethod can be 'card', 'apple', or 'google'
+      const selectedPaymentMethod = paymentMethod || 'card';
+
       const paymentData = {
         amount: paymentDetails.depositAmount,
         email: formData.email,
@@ -164,6 +166,7 @@ const CreateAccount = () => {
         lastName: formData.lastName,
         phoneNumber: formData.phone,
         plan: selectedPlan!,
+        paymentMethod: selectedPaymentMethod, // ✅ Pass payment method to backend
         ticketData: {
           projectDescription: formData.projectDescription,
           selectedRole: formData.selectedRole,
@@ -175,10 +178,6 @@ const CreateAccount = () => {
         }
       };
 
-      // ✅ FIXED: was `${API_BASE_URL}/api/payments/initiate-payment`,
-      // which doubled the /api segment (API_BASE_URL already ends in /api).
-      // The payfast router is mounted at both '/api' and '/api/payments',
-      // so '/initiate-payment' alone resolves correctly.
       const paymentResponse = await fetch(`${API_BASE_URL}/api/initiate-payment`, {
         method: 'POST',
         headers: {
@@ -198,15 +197,6 @@ const CreateAccount = () => {
         throw new Error(paymentResult.message || 'Payment failed');
       }
 
-      // The backend's initiatePaymentService always returns paymentUrl +
-      // paymentData for redirecting to PayFast's hosted checkout — it
-      // creates the ticket record itself (status: 'pending') before
-      // returning this. There is no separate /applications/submit or
-      // /tickets/create call needed here: the ticket already exists, and
-      // it gets marked completed/partial by the PayFast ITN webhook once
-      // payment actually goes through. Submitting the form below
-      // navigates the browser away from this page entirely, so nothing
-      // after this block would ever run for the full-payment flow.
       if (paymentResult.paymentUrl && paymentResult.paymentData) {
         const form = document.createElement('form');
         form.method = 'POST';
@@ -225,11 +215,6 @@ const CreateAccount = () => {
         return;
       }
 
-      // If we get here, the backend didn't return a redirect URL —
-      // treat as an error rather than falling through to legacy
-      // application/ticket creation calls that no longer match the
-      // current backend (there is no /applications/submit or
-      // /tickets/create route).
       throw new Error('Payment initiation did not return a redirect URL');
 
     } catch (err) {
@@ -318,7 +303,6 @@ const CreateAccount = () => {
             selectedPlan={selectedPlan}
             setSelectedPlan={setSelectedPlan}
             onContinue={() => {
-              // Only called when full plan or partial with callback success
               if (selectedPlan === "full") {
                 setCurrentStep(4);
               } else if (selectedPlan === "partial") {
@@ -327,10 +311,6 @@ const CreateAccount = () => {
               }
             }}
             setError={setError}
-            // ✅ NEW: PlanStep needs these to build a complete
-            // /request-partial-payment payload — it previously only
-            // sent whatsapp/phone/email with no applicant identity or
-            // ticket details attached, which the backend requires.
             applicantData={{
               firstName: formData.firstName,
               lastName: formData.lastName,
@@ -346,7 +326,6 @@ const CreateAccount = () => {
             }}
           />
         );
-
       case 4:
         return (
           <PaymentStep
@@ -360,7 +339,7 @@ const CreateAccount = () => {
             error={error}
             loading={loading}
             onPay={processPaymentAndSave}
-            onBack={handleBack} // Pass back handler
+            onBack={handleBack}
           />
         );
       case 5:
@@ -383,7 +362,6 @@ const CreateAccount = () => {
         return false;
 
       case 3:
-        // Disable continue if no plan selected OR if partial plan is selected
         if (!selectedPlan) return true;
         if (selectedPlan === "partial") return true;
         return false;
@@ -464,12 +442,13 @@ const CreateAccount = () => {
               <div key={step.number} className="flex items-start">
                 <div className="flex flex-col items-center gap-2 w-[76px]">
                   <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${step.number < currentStep
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      step.number < currentStep
                         ? 'bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] shadow-[0_0_18px_rgba(201,162,39,0.3)]'
                         : step.number === currentStep
                           ? 'border-2 border-[#C9A227] text-[#C9A227] bg-transparent'
                           : 'border border-white/10 text-white/20 bg-transparent'
-                      }`}
+                    }`}
                   >
                     {step.number < currentStep ? (
                       <Check className="w-[13px] h-[13px]" strokeWidth={3} />
@@ -478,22 +457,24 @@ const CreateAccount = () => {
                     )}
                   </div>
                   <span
-                    className={`text-[10px] font-semibold tracking-wide text-center leading-tight ${step.number === currentStep
+                    className={`text-[10px] font-semibold tracking-wide text-center leading-tight ${
+                      step.number === currentStep
                         ? 'text-[#C9A227]'
                         : step.number < currentStep
                           ? 'text-white/45'
                           : 'text-white/20'
-                      }`}
+                    }`}
                   >
                     {step.label}
                   </span>
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`mt-[18px] transition-all duration-500 w-[28px] h-[1px] ${step.number < currentStep
+                    className={`mt-[18px] transition-all duration-500 w-[28px] h-[1px] ${
+                      step.number < currentStep
                         ? 'bg-gradient-to-r from-[#C9A227] to-[#DFBA3A]'
                         : 'bg-white/5'
-                      }`}
+                    }`}
                   />
                 )}
               </div>
@@ -506,7 +487,6 @@ const CreateAccount = () => {
             {renderStepContent()}
 
             {/* Navigation Buttons - Hide for step 5 (Ticket) */}
-
             {currentStep < 5 && (
               <div className="flex flex-col gap-3 pt-2 mt-8 border-t border-white/5">
                 <div className="flex justify-between">
@@ -529,10 +509,11 @@ const CreateAccount = () => {
                     <button
                       onClick={handleContinue}
                       disabled={isContinueDisabled()}
-                      className={`inline-flex items-center justify-center gap-2.5 font-bold rounded-xl transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed px-8 py-4 text-[15px] ${isContinueDisabled()
+                      className={`inline-flex items-center justify-center gap-2.5 font-bold rounded-xl transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed px-8 py-4 text-[15px] ${
+                        isContinueDisabled()
                           ? "bg-gray-700 text-gray-400"
                           : "bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] shadow-[0_4px_20px_rgba(201,162,39,0.3)]"
-                        }`}
+                      }`}
                     >
                       {getButtonText()}
                       {!loading && <ArrowRight className="w-4 h-4" />}

@@ -1,6 +1,6 @@
 // components/auth/PaymentStep.tsx
 import React from "react";
-import { CreditCard, Smartphone, Building, Lock, Shield, Check, CircleCheckBig, User, Calendar, Crown } from "lucide-react";
+import { CreditCard, Smartphone, Building, Lock, Shield, Check, CircleCheckBig, User, Calendar, Crown, Apple } from "lucide-react";
 
 interface PaymentStepProps {
   selectedPlan: "full" | "partial" | null;
@@ -18,7 +18,7 @@ interface PaymentStepProps {
   error?: string | null;
   loading?: boolean;
   onPay?: () => void;
-  onBack?: () => void; // Add back handler prop
+  onBack?: () => void;
 }
 
 const PaymentStep: React.FC<PaymentStepProps> = ({
@@ -32,13 +32,14 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   error,
   loading,
   onPay,
-  onBack, // Receive back handler
+  onBack,
 }) => {
+  // ✅ All payment methods now available
   const paymentMethods = [
-    { id: "card", label: "Card", icon: CreditCard, available: true },
-    { id: "apple", label: "Apple Pay", icon: Smartphone, available: false },
-    { id: "google", label: "Google Pay", icon: Smartphone, available: false },
-    { id: "bank", label: "Bank Transfer", icon: Building, available: false },
+    { id: "card", label: "Card", icon: CreditCard, available: true, code: "cc" },
+    { id: "apple", label: "Apple Pay", icon: Apple, available: true, code: "ap" },
+    { id: "google", label: "Google Pay", icon: Smartphone, available: true, code: "gp" },
+    { id: "bank", label: "Bank Transfer", icon: Building, available: false, code: "ef" },
   ];
 
   const totalAmount = selectedPlan === "full" ? "R2,040" : "R1,018";
@@ -71,6 +72,12 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     if (!loading && acceptedTerms && paymentMethod) {
       onPay?.();
     }
+  };
+
+  // ✅ Get the selected method's code for backend
+  const getSelectedMethodCode = () => {
+    const method = paymentMethods.find(m => m.id === paymentMethod);
+    return method?.code || 'cc';
   };
 
   return (
@@ -169,8 +176,8 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           {/* Payment Method */}
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3 text-white/35">Payment Method</div>
           
-          {/* Payment Method Toggle */}
-          <div className="flex rounded-xl p-1 mb-7 gap-1 bg-[#0A0707]">
+          {/* Payment Method Toggle - All methods now available */}
+          <div className="flex rounded-xl p-1 mb-7 gap-1 bg-[#0A0707] flex-wrap">
             {paymentMethods.map((method) => {
               const Icon = method.icon;
               const isSelected = paymentMethod === method.id;
@@ -181,7 +188,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                   key={method.id}
                   onClick={() => isAvailable && setPaymentMethod(method.id)}
                   disabled={!isAvailable}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 min-w-[80px] ${
                     isSelected && isAvailable
                       ? "bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505]"
                       : "bg-transparent text-white/30"
@@ -194,7 +201,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             })}
           </div>
 
-          {/* Card Details Form */}
+          {/* Card Details Form - Only show for Card payment */}
           {paymentMethod === "card" && (
             <div className="space-y-5">
               <div>
@@ -287,6 +294,18 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             </div>
           )}
 
+          {/* Apple Pay / Google Pay Info */}
+          {(paymentMethod === "apple" || paymentMethod === "google") && (
+            <div className="mb-6 p-4 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/20 text-center">
+              <div className="text-xs text-white/60 mb-2">
+                You will be redirected to PayFast to complete your {paymentMethod === "apple" ? "Apple Pay" : "Google Pay"} payment.
+              </div>
+              <div className="text-[10px] text-white/30">
+                This is a secure payment processed by PayFast.
+              </div>
+            </div>
+          )}
+
           {/* Terms & Pay Button */}
           <div className="mt-8">
             <div className="flex items-start gap-3 mb-6">
@@ -316,7 +335,9 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                 </>
               ) : (
                 <>
-                  <Lock className="w-4 h-4" />
+                  {paymentMethod === "apple" && <Apple className="w-4 h-4" />}
+                  {paymentMethod === "google" && <Smartphone className="w-4 h-4" />}
+                  {paymentMethod === "card" && <Lock className="w-4 h-4" />}
                   Pay {totalAmount} {selectedPlan === "full" ? "in Full" : "Today"}
                 </>
               )}
