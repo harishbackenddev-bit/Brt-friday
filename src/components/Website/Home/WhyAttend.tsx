@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check, ArrowRight } from 'lucide-react';
 import { Link } from "react-router-dom";
-import WhYattend from "@/assets/home/whynew.jpeg";
+import WhYattend from "@/assets/home/Homepage.jpeg";
 
 const WhyAttend = () => {
   const benefits = [
