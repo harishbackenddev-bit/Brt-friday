@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
+    <section className="relative min-h-screen flex items-center overflow-hidden herohome">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1920&h=1080&fit=crop&auto=format')] bg-cover bg-center opacity-20"></div>
       <div className="absolute inset-0 bg-gradient-to-br from-black/97 via-black/90 to-[#111827]/90"></div>
       <div className="absolute top-[15%] -left-[5%] w-[700px] h-[700px] bg-[radial-gradient(circle,rgba(212,175,55,0.07)_0%,transparent_65%)] rounded-full pointer-events-none"></div>

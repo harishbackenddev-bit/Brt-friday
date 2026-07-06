@@ -21,7 +21,7 @@ const Highlights = () => {
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-6">
           {highlights.map((item, idx) => (
-            <div key={idx} className={`bg-gradient-to-br from-white/5 to-white/0 border border-[${idx === 0 ? '#d4af37/50' : 'white/10'}] rounded-2xl backdrop-blur-md shadow-[${idx === 0 ? '0_0_40px_rgba(212,175,55,0.1),0_20px_60px_rgba(0,0,0,0.4)' : '0_20px_60px_rgba(0,0,0,0.3)'}] p-8 transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_40px_rgba(212,175,55,0.15)]`}>
+            <div key={idx} className={`rdrwhite bg-gradient-to-br from-white/5 to-white/0 border border-[${idx === 0 ? '#d4af37/50' : 'white/10'}] rounded-2xl backdrop-blur-md shadow-[${idx === 0 ? '0_0_40px_rgba(212,175,55,0.1),0_20px_60px_rgba(0,0,0,0.4)' : '0_20px_60px_rgba(0,0,0,0.3)'}] p-8 transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_40px_rgba(212,175,55,0.15)]`}>
               <div className="w-[52px] h-[52px] rounded-[14px] bg-[#d4af37]/20 flex items-center justify-center mb-[22px] border border-[#d4af37]/30">
                 <item.icon size={22} className="text-[#d4af37]" />
               </div>

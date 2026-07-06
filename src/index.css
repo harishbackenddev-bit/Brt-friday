@@ -186,6 +186,12 @@
 .mobilepad,section#about {
     padding-inline: calc(var(--spacing) * 6);
 }
+.object-fit img{
+  object-fit:contain;
+}
+.rdrwhite {
+    border-color: #ffffff4d;
+}
 /* ============================================
    UTILITY CLASSES
    ============================================ */
@@ -478,6 +484,9 @@ select option {
   /* connector line only makes sense in a single row - hide it below desktop */
   .agenda-section .absolute.top-7.left-\[10\%\] {
     display: none !important;
+  }
+  .herohome{
+    padding-top: 100px;
   }
 }
 

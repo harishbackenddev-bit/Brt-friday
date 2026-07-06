@@ -147,22 +147,7 @@ const PartnersSponsors: React.FC = () => {
         </div>
 
         {/* CTA */}
-        <div className="text-center">
-          <p className="text-sm font-medium text-white/40 mb-5">
-            Interested in partnering or sponsoring BRT150 Black Carpet Gala?
-          </p>
-          <button
-            className="inline-flex items-center gap-2.5 font-extrabold text-sm tracking-[0.04em] rounded-xl px-8 py-3.5 transition-colors duration-200 hover:bg-white/5"
-            style={{
-              background: "transparent",
-              color: "rgba(255,255,255,0.75)",
-              border: "1px solid rgba(212,175,55,0.35)",
-              fontFamily: "Manrope, sans-serif",
-            }}
-          >
-            Become a Partner or Sponsor
-          </button>
-        </div>
+       
       </div>
     </section>
   );

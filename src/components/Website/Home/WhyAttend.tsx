@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check, ArrowRight } from 'lucide-react';
 import { Link } from "react-router-dom";
-import WhYattend from "@/assets/home/why_attend.png";
+import WhYattend from "@/assets/home/whynew.jpeg";
 
 const WhyAttend = () => {
   const benefits = [
@@ -17,7 +17,7 @@ const WhyAttend = () => {
   return (
     <section className="py-[100px_24px] bg-black mobilepad" id="whybrt">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-        <div className="relative rounded-2xl overflow-hidden">
+        <div className="relative rounded-2xl overflow-hidden object-fit">
           <img 
             src={WhYattend}
             alt="Professional business networking" 
