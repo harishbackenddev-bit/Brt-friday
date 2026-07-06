@@ -187,6 +187,10 @@
 /* ============================================
    UTILITY CLASSES
    ============================================ */
+body input:disabled {
+    background-color: transparent !important;
+    color: #6b7280 !important;
+}   
 .sideways-rl { writing-mode: sideways-lr; }
 th:first-child { border-top-left-radius: 0.5rem; }
 th:last-child { border-top-right-radius: 0.5rem; }

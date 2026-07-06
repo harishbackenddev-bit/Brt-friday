@@ -25,9 +25,8 @@ const Hero = () => {
           The Black Round Table Presents
         </div>
         <h1 className="text-[clamp(2.8rem,6.5vw,5rem)] font-black leading-[1.05] mb-5 tracking-[-0.02em]">
-          <span className="bg-gradient-to-r from-[#d4af37] to-[#f2ca46] text-transparent bg-clip-text">BRT150</span>
-          <br />
-          <span className="text-white">NETWORKING EVENT</span>
+         
+          <span className="text-white">BLACK CARPET GALA</span>
         </h1>
         <p className="text-xl font-medium text-white/60 max-w-[560px] leading-relaxed mb-[14px]">
           Connecting Entrepreneurs, Professionals &amp; Investors

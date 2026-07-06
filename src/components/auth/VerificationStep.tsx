@@ -1,6 +1,6 @@
 // components/auth/VerificationStep.tsx - Updated role handling
 import React from "react";
-import { Mail, Phone, FileText, Globe, Zap, Building2, CheckCircle, ArrowRight, TrendingUp } from "lucide-react";
+import { Mail, Phone, FileText, Globe, Zap, Building2, CheckCircle, ArrowRight, TrendingUp, Briefcase, Link2 } from "lucide-react";
 
 interface VerificationStepProps {
   formData: {
@@ -25,12 +25,16 @@ const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm
 
   const roleMap: Record<string, { label: string; icon: any }> = {
     entrepreneur: { label: 'Entrepreneur', icon: Zap },
-    professional: { label: 'Professional', icon: Building2 },
+    professional: { label: 'Professional', icon: Briefcase },
     investor: { label: 'Investor', icon: TrendingUp },
   };
 
   const roleInfo = roleMap[formData.selectedRole] || { label: 'Role not selected', icon: null };
   const RoleIcon = roleInfo.icon;
+
+  const isEntrepreneur = formData.selectedRole === "entrepreneur";
+  const isProfessional = formData.selectedRole === "professional";
+  const isInvestor = formData.selectedRole === "investor";
 
   return (
     <div className="space-y-6">
@@ -107,7 +111,9 @@ const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm
           </div>
 
           {/* Role */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-transparent">
+          <div className={`flex items-center gap-3 px-4 py-3 bg-transparent ${
+            (isEntrepreneur || isProfessional || isInvestor) ? "border-b border-white/5" : ""
+          }`}>
             <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
               {RoleIcon ? <RoleIcon className="w-[13px] h-[13px] text-[#C9A227]" /> : <FileText className="w-[13px] h-[13px] text-[#C9A227]" />}
             </div>
@@ -115,10 +121,20 @@ const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm
             <span className="text-sm font-medium truncate flex-1 text-white/75">{roleInfo.label}</span>
           </div>
 
-          {/* Business Details - Only show for Entrepreneur */}
-          {formData.selectedRole === "entrepreneur" && (
+          {/* Entrepreneur — Business URL only */}
+          {isEntrepreneur && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-white/5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
+                <Globe className="w-[13px] h-[13px] text-[#C9A227]" />
+              </div>
+              <span className="text-xs font-semibold w-24 flex-shrink-0 text-white/30">Business URL</span>
+              <span className="text-sm font-medium truncate flex-1 text-white/75">{formData.businessUrl || 'Not provided'}</span>
+            </div>
+          )}
+
+          {/* Professional — Company / Employer Name + Company URL */}
+          {isProfessional && (
             <>
-              {/* Company Name */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-white/5">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
                   <Building2 className="w-[13px] h-[13px] text-[#C9A227]" />
@@ -127,43 +143,34 @@ const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm
                 <span className="text-sm font-medium truncate flex-1 text-white/75">{formData.companyName || 'Not provided'}</span>
               </div>
 
-              {/* Business URL */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-transparent">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                  <Globe className="w-[13px] h-[13px] text-[#C9A227]" />
-                </div>
-                <span className="text-xs font-semibold w-24 flex-shrink-0 text-white/30">Business URL</span>
-                <span className="text-sm font-medium truncate flex-1 text-white/75">{formData.businessUrl || 'Not provided'}</span>
-              </div>
-
-              {/* Company URL */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-white/5">
+              <div className="flex items-center gap-3 px-4 py-3 bg-transparent">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
                   <Globe className="w-[13px] h-[13px] text-[#C9A227]" />
                 </div>
                 <span className="text-xs font-semibold w-24 flex-shrink-0 text-white/30">Company URL</span>
                 <span className="text-sm font-medium truncate flex-1 text-white/75">{formData.companyUrl || 'Not provided'}</span>
               </div>
+            </>
+          )}
 
-              {/* LinkedIn */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-transparent">
+          {/* Investor — LinkedIn Profile URL + Investment Focus */}
+          {isInvestor && (
+            <>
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-white/5">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                  {/* <Linkedin className="w-[13px] h-[13px] text-[#C9A227]" /> */}
+                  <Link2 className="w-[13px] h-[13px] text-[#C9A227]" />
                 </div>
                 <span className="text-xs font-semibold w-24 flex-shrink-0 text-white/30">LinkedIn</span>
                 <span className="text-sm font-medium truncate flex-1 text-white/75">{formData.linkedInUrl || 'Not provided'}</span>
               </div>
 
-              {/* Investment Focus */}
-              {formData.investmentFocus && (
-                <div className="flex items-center gap-3 px-4 py-3 bg-white/5">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                    <FileText className="w-[13px] h-[13px] text-[#C9A227]" />
-                  </div>
-                  <span className="text-xs font-semibold w-24 flex-shrink-0 text-white/30">Investment Focus</span>
-                  <span className="text-sm font-medium truncate flex-1 text-white/75">{formData.investmentFocus}</span>
+              <div className="flex items-center gap-3 px-4 py-3 bg-transparent">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
+                  <FileText className="w-[13px] h-[13px] text-[#C9A227]" />
                 </div>
-              )}
+                <span className="text-xs font-semibold w-24 flex-shrink-0 text-white/30">Investment Focus</span>
+                <span className="text-sm font-medium truncate flex-1 text-white/75">{formData.investmentFocus || 'Not provided'}</span>
+              </div>
             </>
           )}
         </div>
