@@ -7,8 +7,8 @@ import image4 from "@/assets/home/image4.png";
 
 const Speakers = () => {
   const speakers = [
-    { name: 'Dr. Amara Osei', role: 'Managing Partner', company: 'Frontier Capital', img: image1 },
-    { name: 'Naledi Dlamini', role: 'CEO & Founder', company: 'TechBridge Africa', img: image2 },
+    { name: 'Ayanda Zulu', role: 'Managing Partner', company: 'Frontier Capital', img: image1 },
+    { name: 'Penuel Mlotshwa', role: 'CEO & Founder', company: 'TechBridge Africa', img: image2 },
     { name: 'Marcus Sithole', role: 'Investment Director', company: 'Ubuntu Ventures', img: image3 },
     { name: 'Dr. Priya Naidoo', role: 'Chief Strategy Officer', company: 'Pan-African Growth Fund', img: image4 }
   ];
