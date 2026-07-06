@@ -42,7 +42,7 @@ const ApplicationStep: React.FC<ApplicationStepProps> = ({
   const companyStepNumber = String(3 + visibleRoleSectionCount).padStart(2, "0");
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 application-step">
       {/* Section 1: Personal Details */}
       <div>
         <div className="mb-4">

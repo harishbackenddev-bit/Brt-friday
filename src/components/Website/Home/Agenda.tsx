@@ -11,7 +11,7 @@ const Agenda = () => {
   ];
 
   return (
-    <section id="agenda" className="py-[100px_24px] bg-[#0a0a0a] overflow-hidden">
+    <section id="agenda" className="py-[100px_24px] bg-[#0a0a0a] overflow-hidden agenda-section mobilepad">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-[72px]">
           <div className="text-[11px] font-bold tracking-[0.25em] text-[#d4af37]/70 uppercase mb-[14px]">Event Schedule</div>

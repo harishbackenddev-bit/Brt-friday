@@ -183,7 +183,9 @@
   }
 
 }
-
+.mobilepad,section#about {
+    padding-inline: calc(var(--spacing) * 6);
+}
 /* ============================================
    UTILITY CLASSES
    ============================================ */
@@ -464,4 +466,110 @@ select option {
 /* Dark Mode - White logo */
 .dark .logo-image {
   filter: brightness(0) invert(1);
+}
+/* ===================== AGENDA SECTION ===================== */
+
+@media (max-width: 1023px) {
+  .agenda-section .grid.grid-cols-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    row-gap: 2rem !important;
+  }
+
+  /* connector line only makes sense in a single row - hide it below desktop */
+  .agenda-section .absolute.top-7.left-\[10\%\] {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .agenda-section .grid.grid-cols-5 {
+    grid-template-columns: 1fr !important;
+    row-gap: 1.5rem !important;
+  }
+
+  .agenda-section .mb-\[72px\] {
+    margin-bottom: 2.5rem !important;
+  }
+
+  /* circle icon */
+  .agenda-section .w-14.h-14 {
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* card padding */
+  .agenda-section .p-5.px-4 {
+    padding: 1rem !important;
+  }
+
+  .agenda-section .text-sm {
+    font-size: 0.8125rem !important;
+  }
+
+  .agenda-section .text-xs {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .agenda-section h2 {
+    font-size: 1.5rem !important;
+  }
+}
+/* ===================== STEP PROGRESS BAR ===================== */
+
+@media (max-width: 640px) {
+  /* Page container - less side padding so more room for the stepper */
+  .max-w-\[1100px\].mx-auto.px-6.py-16 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .step-progress {
+    gap: 0 !important;
+  }
+
+  /* Each step's label column - shrink from 76px */
+  .step-progress .w-\[76px\] {
+    width: 54px !important;
+  }
+
+  /* Step circle */
+  .step-progress .w-9.h-9 {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    font-size: 0.625rem !important;
+  }
+
+  /* Step label text */
+  .step-progress .text-\[10px\] {
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Connector line between steps */
+  .step-progress .w-\[28px\] {
+    width: 10px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .step-progress .w-\[76px\] {
+    width: 46px !important;
+  }
+
+  .step-progress .w-9.h-9 {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    font-size: 0.5625rem !important;
+  }
+
+  .step-progress .text-\[10px\] {
+    font-size: 7px !important;
+  }
+
+  .step-progress .w-\[28px\] {
+    width: 6px !important;
+  }
 }

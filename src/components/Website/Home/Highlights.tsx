@@ -9,7 +9,7 @@ const Highlights = () => {
   ];
 
   return (
-    <section id="about" className="py-[100px_24px] bg-[#0a0a0a]">
+    <section id="about" className="py-[100px_24px] bg-[#0a0a0a] mobilepad">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <div className="text-[11px] font-bold tracking-[0.25em] text-[#d4af37]/70 uppercase mb-[14px]">

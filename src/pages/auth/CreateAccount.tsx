@@ -455,7 +455,7 @@ const CreateAccount = () => {
           </div>
 
           {/* Progress Steps */}
-          <div className="flex items-start justify-center gap-0 mb-12">
+          <div className="flex items-start justify-center gap-0 mb-12 step-progress">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-start">
                 <div className="flex flex-col items-center gap-2 w-[76px]">

@@ -15,7 +15,7 @@ const WhyAttend = () => {
   ];
 
   return (
-    <section className="py-[100px_24px] bg-black">
+    <section className="py-[100px_24px] bg-black mobilepad" id="whybrt">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
         <div className="relative rounded-2xl overflow-hidden">
           <img 

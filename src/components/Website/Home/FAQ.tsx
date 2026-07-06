@@ -20,7 +20,7 @@ const FAQ: React.FC<FAQProps> = ({ faqs }) => {
   };
 
   return (
-    <section id="faq" className="py-[100px_24px] bg-black">
+    <section id="faq" className="py-[100px_24px] bg-black mobilepad">
       <div className="max-w-[780px] mx-auto">
         <div className="text-center mb-16">
           <div className="text-[11px] font-bold tracking-[0.25em] text-[#d4af37]/70 uppercase mb-[14px]">

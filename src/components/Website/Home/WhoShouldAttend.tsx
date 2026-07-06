@@ -9,7 +9,7 @@ const WhoShouldAttend = () => {
   ];
 
   return (
-    <section className="py-[100px_24px] bg-[#111827]">
+    <section className="py-[100px_24px] bg-[#111827] mobilepad" id="whoshould">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <div className="text-[11px] font-bold tracking-[0.25em] text-[#d4af37]/70 uppercase mb-[14px]">Your Seat at the Table</div>

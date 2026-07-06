@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from "react-router-dom";
 const CTA = () => {
   return (
-    <section className="py-[120px_24px] bg-[#0a0a0a] relative overflow-hidden">
+    <section className="py-[120px_24px] bg-[#0a0a0a] relative overflow-hidden mobilepad" id="readytojoin">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[radial-gradient(circle,rgba(212,175,55,0.07)_0%,transparent_65%)] rounded-full pointer-events-none"></div>
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/40 to-transparent"></div>
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/40 to-transparent"></div>

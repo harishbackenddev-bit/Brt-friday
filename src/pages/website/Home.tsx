@@ -11,6 +11,7 @@ import Speakers from "@/components/Website/Home/Speakers";
 import Venue from "@/components/Website/Home/Venue";
 import CTA from "@/components/Website/Home/CTA";
 import FAQ from "@/components/Website/Home/FAQ";
+import PartnersSponsors from "@/components/Website/Home/PartnersSponsors";
 import { faqData } from '../../data/faqData';  
 
 function Home() {
@@ -21,7 +22,7 @@ function Home() {
       <Highlights />
       <WhyAttend />
       <WhoShouldAttend />
-      <Agenda />
+      <PartnersSponsors />
       <Stats />
       <Speakers />
       <Venue />

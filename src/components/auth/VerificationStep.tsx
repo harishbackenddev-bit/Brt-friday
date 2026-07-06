@@ -37,7 +37,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm
   const isInvestor = formData.selectedRole === "investor";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 verification-step">
       <div className="text-center mb-8">
         <div className="flex justify-center mb-6">
           <div className="w-20 h-20 rounded-full flex items-center justify-center bg-[radial-gradient(circle,rgba(201,162,39,0.2)_0%,rgba(201,162,39,0.03)_70%)] border border-[#C9A227]/30 shadow-[0_0_60px_rgba(201,162,39,0.2)]">

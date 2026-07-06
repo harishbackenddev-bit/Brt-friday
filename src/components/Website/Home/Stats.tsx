@@ -26,9 +26,9 @@ const Stats: React.FC<StatsProps> = ({
   });
 
   return (
-    <section 
+    <section id="stats"
       ref={ref}
-      className="py-[100px_24px] bg-gradient-to-br from-black via-[#d4af37]/10 to-black border-y border-[#d4af37]/10"
+      className="py-[100px_24px] bg-gradient-to-br from-black via-[#d4af37]/10 to-black border-y border-[#d4af37]/10 mobilepad"
     >
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
