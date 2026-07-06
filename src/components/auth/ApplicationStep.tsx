@@ -231,7 +231,7 @@ const ApplicationStep: React.FC<ApplicationStepProps> = ({
           {/* Business URL — Entrepreneur only */}
           <div className={!isEntrepreneur ? "opacity-30" : undefined}>
             <label className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-2 text-white/35">
-              Business URL *
+              Business URL {isEntrepreneur && "*"}
             </label>
             <div className="relative">
               <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-white/30" />
@@ -253,7 +253,7 @@ const ApplicationStep: React.FC<ApplicationStepProps> = ({
           {/* Company / Employer Name — Professional only */}
           <div className={!isProfessional ? "opacity-30" : undefined}>
             <label className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-2 text-white/35">
-              Company / Employer Name *
+              Company / Employer Name {isProfessional && "*"}
             </label>
             <div className="relative">
               <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-white/30" />
@@ -272,7 +272,7 @@ const ApplicationStep: React.FC<ApplicationStepProps> = ({
           {/* Company URL — Professional only */}
           <div className={!isProfessional ? "opacity-30" : undefined}>
             <label className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-2 text-white/35">
-              Company URL *
+              Company URL {isProfessional && "*"}
             </label>
             <div className="relative">
               <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-white/30" />
@@ -294,7 +294,7 @@ const ApplicationStep: React.FC<ApplicationStepProps> = ({
           {/* LinkedIn URL — Investor only */}
           <div className={!isInvestor ? "opacity-30" : undefined}>
             <label className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-2 text-white/35">
-              LinkedIn Profile URL *
+              LinkedIn Profile URL {isInvestor && "*"}
             </label>
             <div className="relative">
               <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-white/30" />

@@ -111,8 +111,20 @@ const CreateAccount = () => {
           return false;
         }
         if (formData.selectedRole === "entrepreneur") {
-          if (!formData.businessUrl || !formData.companyName || !formData.companyUrl || !formData.linkedInUrl) {
-            setError("Please fill in all business details");
+          if (!formData.businessUrl) {
+            setError("Please provide your business URL");
+            return false;
+          }
+        }
+        if (formData.selectedRole === "professional") {
+          if (!formData.companyName || !formData.companyUrl) {
+            setError("Please fill in your company/employer details");
+            return false;
+          }
+        }
+        if (formData.selectedRole === "investor") {
+          if (!formData.linkedInUrl) {
+            setError("Please provide your LinkedIn profile URL");
             return false;
           }
         }
@@ -357,7 +369,13 @@ const CreateAccount = () => {
         if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) return true;
         if (!formData.selectedRole) return true;
         if (formData.selectedRole === "entrepreneur") {
-          if (!formData.businessUrl || !formData.companyName || !formData.companyUrl || !formData.linkedInUrl) return true;
+          if (!formData.businessUrl) return true;
+        }
+        if (formData.selectedRole === "professional") {
+          if (!formData.companyName || !formData.companyUrl) return true;
+        }
+        if (formData.selectedRole === "investor") {
+          if (!formData.linkedInUrl) return true;
         }
         return false;
 
