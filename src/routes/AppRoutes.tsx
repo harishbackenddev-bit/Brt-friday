@@ -11,7 +11,7 @@ import AdminLayout from "@/layouts/admin/AdminLayout";
 // Website Pages
 import Home from "@/pages/website/Home";
 import Ticket from "@/pages/website/Ticket/Ticket";
-
+import Cancel from "@/pages/website/Ticket/PaymentCancelled";
 // Auth Pages
 import Login from "@/pages/auth/Login";
 import CreateAccount from "@/pages/auth/CreateAccount";
@@ -35,6 +35,8 @@ const AppRoutes = () => {
       <Route path="/" element={<WebsiteLayout />}>
         <Route index element={<Home />} />
         <Route path="/ticket" element={<Ticket />} />
+         <Route path="/payment-cancelled" element={<Cancel />} />
+        
       </Route>
 
       {/* AUTH - Public */}
