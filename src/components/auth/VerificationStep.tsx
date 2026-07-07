@@ -19,6 +19,38 @@ interface VerificationStepProps {
   onConfirm: () => void;
 }
 
+/* ---------------------------------------------------------------------- */
+/* Reusable detail row.                                                    */
+/* Icon is a fixed-width column; label + value share one content column   */
+/* that stacks (label above value) on mobile and sits inline from `sm` up.*/
+/* No manual padding offsets needed to keep things aligned.                */
+/* ---------------------------------------------------------------------- */
+interface DetailRowProps {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  shaded?: boolean;
+  bordered?: boolean;
+}
+
+const DetailRow: React.FC<DetailRowProps> = ({ icon: Icon, label, value, shaded, bordered = true }) => {
+  return (
+    <div
+      className={`flex items-start sm:items-center gap-3 px-3 sm:px-4 py-3 ${
+        bordered ? "border-b border-white/5" : ""
+      } ${shaded ? "bg-white/5" : "bg-transparent"}`}
+    >
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
+        <Icon className="w-[13px] h-[13px] text-[#C9A227]" />
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3">
+        <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">{label}</span>
+        <span className="text-sm font-medium truncate sm:flex-1 text-white/75">{value}</span>
+      </div>
+    </div>
+  );
+};
+
 const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm }) => {
   const fullName = `${formData.firstName} ${formData.lastName}`.trim() || 'Not provided';
   const initials = `${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`.toUpperCase() || '?';
@@ -61,11 +93,11 @@ const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm
         </div>
 
         {/* User Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl mb-5 bg-white/5 border border-white/5">
+        <div className="flex items-center gap-4 p-4 rounded-xl mb-5 bg-white/5 border border-white/5">
           <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-base bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] tracking-[0.04em]">
             {initials}
           </div>
-          <div className="flex-1 min-w-0 w-full sm:w-auto">
+          <div className="flex-1 min-w-0">
             <div className="text-white font-bold text-base truncate">{fullName}</div>
             <div className="flex flex-wrap items-center gap-2 mt-1">
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C9A227]/15 border border-[#C9A227]/25">
@@ -84,130 +116,34 @@ const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm
 
         {/* Profile Details - Mobile Optimized */}
         <div className="rounded-xl overflow-hidden mb-7 border border-white/5">
-          {/* Email */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b border-white/5 bg-white/5">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                <Mail className="w-[13px] h-[13px] text-[#C9A227]" />
-              </div>
-              <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">Email</span>
-            </div>
-            <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-              {formData.email || 'Not provided'}
-            </span>
-          </div>
-
-          {/* Phone */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b border-white/5 bg-transparent">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                <Phone className="w-[13px] h-[13px] text-[#C9A227]" />
-              </div>
-              <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">Phone</span>
-            </div>
-            <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-              {formData.phone || 'Not provided'}
-            </span>
-          </div>
-
-          {/* Project */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b border-white/5 bg-white/5">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                <FileText className="w-[13px] h-[13px] text-[#C9A227]" />
-              </div>
-              <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">Project</span>
-            </div>
-            <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-              {formData.projectDescription || 'Not provided'}
-            </span>
-          </div>
-
-          {/* Role */}
-          <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 ${
-            (isEntrepreneur || isProfessional || isInvestor) ? "border-b border-white/5" : ""
-          } bg-transparent`}>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                {RoleIcon ? <RoleIcon className="w-[13px] h-[13px] text-[#C9A227]" /> : <FileText className="w-[13px] h-[13px] text-[#C9A227]" />}
-              </div>
-              <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">Role</span>
-            </div>
-            <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-              {roleInfo.label}
-            </span>
-          </div>
+          <DetailRow icon={Mail} label="Email" value={formData.email || 'Not provided'} shaded />
+          <DetailRow icon={Phone} label="Phone" value={formData.phone || 'Not provided'} />
+          <DetailRow icon={FileText} label="Project" value={formData.projectDescription || 'Not provided'} shaded />
+          <DetailRow
+            icon={RoleIcon || FileText}
+            label="Role"
+            value={roleInfo.label}
+            bordered={isEntrepreneur || isProfessional || isInvestor}
+          />
 
           {/* Entrepreneur — Business URL only */}
           {isEntrepreneur && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 bg-white/5">
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                  <Globe className="w-[13px] h-[13px] text-[#C9A227]" />
-                </div>
-                <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">Business URL</span>
-              </div>
-              <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-                {formData.businessUrl || 'Not provided'}
-              </span>
-            </div>
+            <DetailRow icon={Globe} label="Business URL" value={formData.businessUrl || 'Not provided'} shaded bordered={false} />
           )}
 
           {/* Professional — Company / Employer Name + Company URL */}
           {isProfessional && (
             <>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b border-white/5 bg-white/5">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                    <Building2 className="w-[13px] h-[13px] text-[#C9A227]" />
-                  </div>
-                  <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">Company</span>
-                </div>
-                <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-                  {formData.companyName || 'Not provided'}
-                </span>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 bg-transparent">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                    <Globe className="w-[13px] h-[13px] text-[#C9A227]" />
-                  </div>
-                  <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">Company URL</span>
-                </div>
-                <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-                  {formData.companyUrl || 'Not provided'}
-                </span>
-              </div>
+              <DetailRow icon={Building2} label="Company" value={formData.companyName || 'Not provided'} shaded />
+              <DetailRow icon={Globe} label="Company URL" value={formData.companyUrl || 'Not provided'} bordered={false} />
             </>
           )}
 
           {/* Investor — LinkedIn Profile URL + Investment Focus */}
           {isInvestor && (
             <>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b border-white/5 bg-white/5">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                    <Link2 className="w-[13px] h-[13px] text-[#C9A227]" />
-                  </div>
-                  <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">LinkedIn</span>
-                </div>
-                <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-                  {formData.linkedInUrl || 'Not provided'}
-                </span>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 bg-transparent">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#C9A227]/10">
-                    <FileText className="w-[13px] h-[13px] text-[#C9A227]" />
-                  </div>
-                  <span className="text-xs font-semibold sm:w-24 flex-shrink-0 text-white/30">Investment Focus</span>
-                </div>
-                <span className="text-sm font-medium truncate w-full sm:flex-1 text-white/75 pl-10 sm:pl-0">
-                  {formData.investmentFocus || 'Not provided'}
-                </span>
-              </div>
+              <DetailRow icon={Link2} label="LinkedIn" value={formData.linkedInUrl || 'Not provided'} shaded />
+              <DetailRow icon={FileText} label="Investment Focus" value={formData.investmentFocus || 'Not provided'} bordered={false} />
             </>
           )}
         </div>
