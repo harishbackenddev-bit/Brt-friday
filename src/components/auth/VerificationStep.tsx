@@ -149,13 +149,13 @@ const VerificationStep: React.FC<VerificationStepProps> = ({ formData, onConfirm
         </div>
 
         {/* Confirm Button */}
-        <button
+        {/* <button
           onClick={onConfirm}
           className="inline-flex items-center justify-center gap-2.5 font-bold rounded-xl transition-all duration-200 active:scale-[0.99] w-full px-8 py-4 text-[15px] bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] text-[#050505] shadow-[0_4px_24px_rgba(201,162,39,0.25)] hover:shadow-[0_4px_32px_rgba(201,162,39,0.35)]"
         >
           Confirm & Proceed
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </button> */}
       </div>
     </div>
   );
