@@ -104,7 +104,7 @@ const Venue = () => {
                   />
 
                   <span className="text-sm font-semibold text-white group-hover:text-[#d4af37] transition-colors">
-                    Open Venue in Google Maps
+                    Ethereal, Newcastle, KwaZulu-Natal
                   </span>
 
                   <ExternalLink
