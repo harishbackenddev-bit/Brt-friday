@@ -1,6 +1,6 @@
 // components/auth/PaymentStep.tsx
 import React from "react";
-import { CreditCard, Smartphone, Building, Lock, Shield, Check, CircleCheckBig, User, Calendar, Crown, Apple } from "lucide-react";
+import { CreditCard, Smartphone, Building, Lock, Shield, Check, CircleCheckBig, Crown, Apple } from "lucide-react";
 
 interface PaymentStepProps {
   selectedPlan: "full" | "partial" | null;
@@ -8,13 +8,6 @@ interface PaymentStepProps {
   setPaymentMethod: (method: string) => void;
   acceptedTerms: boolean;
   setAcceptedTerms: (accepted: boolean) => void;
-  cardDetails: {
-    cardNumber: string;
-    cardHolder: string;
-    expiryDate: string;
-    cvv: string;
-  };
-  handleCardChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string | null;
   loading?: boolean;
   onPay?: () => void;
@@ -27,57 +20,29 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   setPaymentMethod,
   acceptedTerms,
   setAcceptedTerms,
-  cardDetails,
-  handleCardChange,
   error,
   loading,
   onPay,
   onBack,
 }) => {
-  // ✅ All payment methods now available
   const paymentMethods = [
     { id: "card", label: "Card", icon: CreditCard, available: true, code: "cc" },
     { id: "apple", label: "Apple Pay", icon: Apple, available: true, code: "ap" },
     { id: "google", label: "Google Pay", icon: Smartphone, available: true, code: "gp" },
-    { id: "bank", label: "Bank Transfer", icon: Building, available: false, code: "ef" },
+    { id: "bank", label: "Bank Transfer", icon: Building, available: true, code: "ef" },
   ];
 
   const totalAmount = selectedPlan === "full" ? "R2,040" : "R1,018";
-  const remainingBalance = selectedPlan === "full" ? "R0" : "R1,017";
 
-  const formatCardNumber = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    const groups = cleaned.match(/.{1,4}/g);
-    return groups ? groups.join(' ') : cleaned;
-  };
-
-  const formatExpiry = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length >= 2) {
-      return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
-    }
-    return cleaned;
-  };
-
-  const handleCardInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    let formattedValue = value;
-    if (id === 'cardNumber') formattedValue = formatCardNumber(value);
-    if (id === 'expiryDate') formattedValue = formatExpiry(value);
-    const event = { ...e, target: { ...e.target, id, value: formattedValue } } as React.ChangeEvent<HTMLInputElement>;
-    handleCardChange(event);
+  const getSelectedMethodCode = () => {
+    const method = paymentMethods.find(m => m.id === paymentMethod);
+    return method?.code || 'cc';
   };
 
   const handlePayClick = () => {
     if (!loading && acceptedTerms && paymentMethod) {
       onPay?.();
     }
-  };
-
-  // ✅ Get the selected method's code for backend
-  const getSelectedMethodCode = () => {
-    const method = paymentMethods.find(m => m.id === paymentMethod);
-    return method?.code || 'cc';
   };
 
   return (
@@ -94,14 +59,12 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>
       )}
 
-      {/* Grid Layout: Order Summary + Secure Payment */}
       <div className="grid grid-cols-1 lg:grid-cols-[440px_1fr] gap-8">
         {/* Order Summary Card - Left */}
         <div className="flex flex-col gap-5">
           <div className="rounded-2xl p-7 bg-gradient-to-br from-[#151010] to-[#0E0909] border border-white/6 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
             <div className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-[#C9A227]">Order Summary</div>
             
-            {/* Event Info */}
             <div className="flex items-center gap-4 p-4 rounded-xl mb-6 bg-white/5 border border-white/6">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#C9A227]/15">
                 <Crown className="w-5 h-5 text-[#C9A227]" />
@@ -113,7 +76,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
               <div className="ml-auto font-bold text-base text-white flex-shrink-0">R2,000</div>
             </div>
 
-            {/* Price Breakdown */}
             <div className="space-y-3 mb-6">
               <div className="flex justify-between">
                 <span className="text-sm font-medium text-white/38">Subtotal</span>
@@ -125,7 +87,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
               </div>
             </div>
 
-            {/* Total */}
             <div className="flex items-center justify-between pt-5 border-t border-white/7">
               <span className="text-white font-bold text-lg">Total</span>
               <span className="font-bold text-2xl bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] bg-clip-text text-transparent tracking-[-0.02em]">
@@ -134,7 +95,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             </div>
           </div>
 
-          {/* Security Footer */}
           <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
             <div className="flex items-center gap-2 flex-1 justify-center">
               <Shield className="w-3.5 h-3.5 text-[#C9A227]/60" />
@@ -155,14 +115,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
         <div className="rounded-2xl p-8 bg-gradient-to-br from-[#151010] to-[#0E0909] border border-white/6 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
           <div className="text-[10px] font-bold uppercase tracking-[0.2em] mb-7 text-[#C9A227]">Secure Payment</div>
 
-          {/* Payment Summary */}
           <div className="flex items-center justify-between p-3.5 rounded-xl mb-7 bg-[#C9A227]/7 border border-[#C9A227]/20">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#C9A227]">
                 {selectedPlan === "full" ? "Full Payment" : "Partial Payment"}
               </div>
               <div className="text-xs font-medium mt-0.5 text-white/40">
-                {selectedPlan === "full" ? "R2,040 due today" : `R${totalAmount} due today`}
+                {selectedPlan === "full" ? "R2,040 due today" : `${totalAmount} due today`}
               </div>
             </div>
             <span className="font-black text-lg bg-gradient-to-r from-[#C9A227] to-[#DFBA3A] bg-clip-text text-transparent">
@@ -170,13 +129,10 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             </span>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-white/5 mb-7"></div>
 
-          {/* Payment Method */}
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3 text-white/35">Payment Method</div>
           
-          {/* Payment Method Toggle - All methods now available */}
           <div className="flex rounded-xl p-1 mb-7 gap-1 bg-[#0A0707] flex-wrap">
             {paymentMethods.map((method) => {
               const Icon = method.icon;
@@ -201,112 +157,16 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             })}
           </div>
 
-          {/* Card Details Form - Only show for Card payment */}
-          {paymentMethod === "card" && (
-            <div className="space-y-5">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-2 text-white/35">
-                  Cardholder Name
-                </label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20">
-                    <User className="w-3.5 h-3.5" />
-                  </div>
-                  <input
-                    id="cardHolder"
-                    type="text"
-                    value={cardDetails.cardHolder}
-                    onChange={handleCardChange}
-                    placeholder="James Adeyemi"
-                    className="w-full rounded-xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/20 outline-none transition-all duration-200 bg-[#0A0707] border border-white/7 focus:border-[#C9A227] font-['Manrope']"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-2 text-white/35">
-                  Card Number
-                </label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20">
-                    <CreditCard className="w-3.5 h-3.5" />
-                  </div>
-                  <input
-                    id="cardNumber"
-                    type="text"
-                    value={cardDetails.cardNumber}
-                    onChange={handleCardInputChange}
-                    placeholder="•••• •••• •••• ••••"
-                    maxLength={19}
-                    className="w-full rounded-xl py-3.5 pl-11 pr-16 text-sm text-white placeholder-white/20 outline-none transition-all duration-200 bg-[#0A0707] border border-white/7 focus:border-[#C9A227] font-['Manrope'] tracking-[0.08em]"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-1">
-                    <div className="w-7 h-4 rounded bg-white/10 flex items-center justify-center">
-                      <span className="text-[7px] font-bold text-white/50">VISA</span>
-                    </div>
-                    <div className="w-7 h-4 rounded bg-white/10 flex items-center justify-center">
-                      <span className="text-[6px] font-bold text-white/50">MC</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-2 text-white/35">
-                    Expiry Date
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20">
-                      <Calendar className="w-3.5 h-3.5" />
-                    </div>
-                    <input
-                      id="expiryDate"
-                      type="text"
-                      value={cardDetails.expiryDate}
-                      onChange={handleCardInputChange}
-                      placeholder="MM / YY"
-                      maxLength={5}
-                      className="w-full rounded-xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/20 outline-none transition-all duration-200 bg-[#0A0707] border border-white/7 focus:border-[#C9A227] font-['Manrope']"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-2 text-white/35">
-                    CVV
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20">
-                      <Lock className="w-3.5 h-3.5" />
-                    </div>
-                    <input
-                      id="cvv"
-                      type="password"
-                      value={cardDetails.cvv}
-                      onChange={handleCardChange}
-                      placeholder="•••"
-                      maxLength={4}
-                      className="w-full rounded-xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/20 outline-none transition-all duration-200 bg-[#0A0707] border border-white/7 focus:border-[#C9A227] font-['Manrope']"
-                    />
-                  </div>
-                </div>
-              </div>
+          {/* Payment Info Message */}
+          <div className="mb-6 p-4 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/20 text-center">
+            <div className="text-xs text-white/60 mb-2">
+              You will be redirected to PayFast to complete your payment securely.
             </div>
-          )}
-
-          {/* Apple Pay / Google Pay Info */}
-          {(paymentMethod === "apple" || paymentMethod === "google") && (
-            <div className="mb-6 p-4 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/20 text-center">
-              <div className="text-xs text-white/60 mb-2">
-                You will be redirected to PayFast to complete your {paymentMethod === "apple" ? "Apple Pay" : "Google Pay"} payment.
-              </div>
-              <div className="text-[10px] text-white/30">
-                This is a secure payment processed by PayFast.
-              </div>
+            <div className="text-[10px] text-white/30">
+              This is a secure payment processed by PayFast.
             </div>
-          )}
+          </div>
 
-          {/* Terms & Pay Button */}
           <div className="mt-8">
             <div className="flex items-start gap-3 mb-6">
               <button
@@ -322,7 +182,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
               </label>
             </div>
 
-            {/* Pay Button */}
             <button
               onClick={handlePayClick}
               disabled={loading || !acceptedTerms || !paymentMethod}
