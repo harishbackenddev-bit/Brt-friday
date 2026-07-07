@@ -27,6 +27,22 @@ const ApplicationStep: React.FC<ApplicationStepProps> = ({
   setSelectedRole,
   error,
 }) => {
+  const MAX_PHONE_DIGITS = 15; // E.164 max length
+
+  // Strips everything except digits (keeps a leading "+" if the user typed one),
+  // and caps the total number of digits so pasted junk / letters can't get in.
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const hasPlus = raw.trim().startsWith("+");
+    const digitsOnly = raw.replace(/\D/g, "").slice(0, MAX_PHONE_DIGITS);
+    const cleaned = hasPlus ? `+${digitsOnly}` : digitsOnly;
+
+    handleInputChange({
+      ...e,
+      target: { ...e.target, id: "phone", value: cleaned },
+    } as React.ChangeEvent<HTMLInputElement>);
+  };
+
   const isEntrepreneur = formData.selectedRole === "entrepreneur";
   const isProfessional = formData.selectedRole === "professional";
   const isInvestor = formData.selectedRole === "investor";
@@ -115,8 +131,10 @@ const ApplicationStep: React.FC<ApplicationStepProps> = ({
               <input
                 id="phone"
                 type="tel"
+                inputMode="numeric"
+                maxLength={16}
                 value={formData.phone}
-                onChange={handleInputChange}
+                onChange={handlePhoneChange}
                 placeholder="+27 800 000 000"
                 className="w-full rounded-xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/30 outline-none transition-all duration-200 bg-[#0A0707] border border-white/7 focus:border-[#C9A227] font-['Manrope']"
               />
